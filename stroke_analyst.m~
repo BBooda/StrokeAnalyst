@@ -1,10 +1,23 @@
 %% aquire data to run, set variables
 dramms_path = "home/makis/myprograms/dramms/bin";
-atlas_path = "../../";
+atlas_path = "../data_dependencies";
+output_folder_path = "../processing_folder";
 
 %set variables
 subject = subject_info.subject;
 reference = subject_info.reference;
 index = subject_info.index;
 
-% aquire 
+% aquire atlas 
+ttc_atlas = load(strcat(atlas_path, '/myatlasv1.mat'));
+
+%% register to ttc_atlas 
+
+save_dir = create_processing_folder(index, output_folder_path);
+
+% perform linear registration 
+[MOVINGREG, tform, movingRefObj,fixedRefObj] = linear_registration(rgb2gray(subject, ))
+
+
+
+
