@@ -1,0 +1,16 @@
+classdef Subject
+    properties
+        img {mustBeNumeric}
+        reference {mustBeNumeric}
+        zscore {mustBeNumeric}
+        aff_hemisphere {mustBeNumeric}
+        hemisphere_masks 
+    end
+    
+    methods
+        % constructor
+        function obj = Subject(img)
+            obj.img = img;
+        end
+    end
+end
