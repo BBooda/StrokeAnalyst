@@ -13,6 +13,9 @@ index = subject_info.index;
 ttc_atlas = load(strcat(atlas_path, '/myatlasv1.mat'));
 reference = find_atlas_img(index, ttc_atlas);
 
+% load hemisphere transformations 
+hemi_tr = load(strcat(atlas_path, '/hemisphere_transformations','/hemisphere_transformations.mat'));
+
 %% register to ttc_atlas 
 
 save_dir = create_processing_folder(index, output_folder_path);
