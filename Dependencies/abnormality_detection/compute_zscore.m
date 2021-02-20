@@ -89,25 +89,37 @@ function zscore_out = compute_zscore(registered, reference, hemi_masks, index, s
 %              create_nifti({left_hem_mask}, app.save_dir, 'left_hem_mask_atlas_space', [0.021 0.021 0 1]);
      nifti_save(right_hem_mask, 'right_hem_mask_atlas_space', save_dir);
      nifti_save(left_hem_mask, 'left_hem_mask_atlas_space', save_dir);
+     
+     % create zscore nifti file, exclude unwanted values
+     zscore(isnan(zscore(:))) = 0;
+     zscore(isinf(zscore(:))) = 20;
+     nifti_save(zscore, 'zscore_atlas_space', save_dir);
 
      % set paths for dramms, apply inv deformation field.
      zscore_out.r_h_mask_path = strcat(save_dir, '/right_hem_mask_atlas_space');
      zscore_out.l_h_mask_path = strcat(save_dir, '/left_hem_mask_atlas_space');
+     zscore_out.zscore_path = strcat(save_dir, '/zscore_atlas_space');
      
      % inverse non linear transformation on hemisphere masks
      dramms_warp(zscore_out.r_h_mask_path,inv_dfield_path, save_dir, 'right_h_mask_inversedDf', dramms_dr);
      dramms_warp(zscore_out.l_h_mask_path,inv_dfield_path, save_dir, 'left_h_mask_inversedDf', dramms_dr);
+     dramms_warp(zscore_out.zscore_path,inv_dfield_path, save_dir, 'zscore_inversedDf', dramms_dr);
 
-     %inverse linear transformation on hemi masks
+     % read inverse linear transformation on hemi masks
      inv_rhem_mask = 255*uint8(niftiread(strcat(save_dir, '/right_h_mask_inversedDf.nii')));
      inv_lhem_mask = 255*uint8(niftiread(strcat(save_dir, '/left_h_mask_inversedDf.nii')));
-
+     inv_zscore = niftiread(strcat(save_dir, '/zscore_inversedDf.nii'));     
+     
      subject_space_rhem_mask = imwarp(imbinarize(inv_rhem_mask), lin_transf.fixedRefObj, lin_transf.inv_aff, ...
          'OutputView', lin_transf.movingRefObj, 'SmoothEdges', true);
 
      subject_space_lhem_mask = imwarp(imbinarize(inv_lhem_mask), lin_transf.fixedRefObj, lin_transf.inv_aff, ... 
          'OutputView', lin_transf.movingRefObj, 'SmoothEdges', true);
+     
+     ss_zscore= imwarp(inv_zscore, lin_transf.fixedRefObj, lin_transf.inv_aff, ... 
+         'OutputView', lin_transf.movingRefObj, 'SmoothEdges', true);
 
      zscore_out.ss_RHM = subject_space_rhem_mask;
      zscore_out.ss_LHM = subject_space_lhem_mask;
+     zscore_out.ss_zscore = ss_zscore;
 end

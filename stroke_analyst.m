@@ -18,7 +18,7 @@ reference = find_atlas_img(index, ttc_atlas);
 save_dir = create_processing_folder(index, output_folder_path);
 
 % perform linear registration 
-[lin_out, tform, movingRefObj,fixedRefObj] = linear_registration(rgb2gray(subject), reference);
+[lin_out, tform, movingRefObj,fixedRefObj] = linear_registration(rgb2gray(subject), reference.Img);
 
 % create nifti images to work with dramms
 % name convention: affine data subject to atlas
@@ -28,7 +28,7 @@ affine_data_S2A = create_affine_data(lin_out, subject, reference.Img, index, sav
 non_lin_reg_info = non_linear_registration(index, save_dir, dramms_path);
 
 % load registered image
-registered = niftiread(strcat(non_lin_reg_info.regi_output_path, '.nii'));
+registered = niftiread(non_lin_reg_info.regi_output_path);
 
 % load hemisphere masks 
 hemisphere_masks = load(strcat(atlas_path, '/hemisphere_masks.mat'));

@@ -21,6 +21,7 @@ function reg_info = dramms_2dregistration(target_path,moving_path,out_path, file
     reg_info.target_img_path = target_path;
     reg_info.moving_img_path = moving_path;
     reg_info.regi_output_path_dfield = out_path_dfield;
+    reg_info.regi_output_path = out_path;
 
 %     sett = " -w 1 -a 0 -v -v";
 
