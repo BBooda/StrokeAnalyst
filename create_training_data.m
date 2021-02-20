@@ -4,3 +4,8 @@
 % hemisphere.
 
 % perform registration to average slice
+function training_data = create_training_data(subject_info)
+    % aquire data 
+    
+
+end
