@@ -39,7 +39,7 @@ hemisphere_masks = hemisphere_masks.hemi_m;
 
 zscore_out = compute_zscore(registered, reference, hemisphere_masks, index, save_dir, non_lin_reg_info.inv_info.out_path, affine_data_S2A, dramms_path);
 
-
+register_atlas_hemisphere(reference, index, 1, hemi_tr, save_dir, atlas_path, dramms_path)
 
 
 

@@ -12,7 +12,7 @@ function reg_info = dramms_2dregistration(target_path,moving_path,out_path, file
     out_path_dfield = convertCharsToStrings(strcat(out_path, '/dfield.nii.gz'));
 
     if ~isempty(varargin)
-        out_path_dfield = convertCharsToStrings(strcat(varargin{1}, 'dfield.nii.gz'));
+        out_path_dfield = convertCharsToStrings(strcat(varargin{1}, '_dfield.nii.gz'));
     end
 
     out_path = convertCharsToStrings(strcat(out_path, "/registered_", file_name, "_to_average.nii"));
