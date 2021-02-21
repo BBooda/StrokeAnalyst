@@ -24,9 +24,9 @@ function out = create_zscore_flip(zscore, affine_info, dfield_path, dramms_dir,s
     % compute zscore hemisphere difference
     zscore_diff_atlas_space = abs(zscore - zscore_fliped_registered);
     
-    nifti_save(zscore_diff_atlas_space, 'zscore_fliped_registered', save_dir);
+    nifti_save(zscore_diff_atlas_space, 'zscore_diff_as', save_dir);
     
-    zscore_fliped_registered_path = strcat(save_dir, '/zscore_fliped_registered');
+    zscore_fliped_registered_path = strcat(save_dir, '/zscore_diff_as');
     
     out.zscore_diff_atlas_space = zscore_diff_atlas_space;
     out.zscore_fliped_registered = zscore_fliped_registered;

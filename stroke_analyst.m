@@ -25,6 +25,9 @@ hemi_tr = load(strcat(atlas_path, '/hemisphere_transformations','/hemisphere_tra
 
 %% register to ttc_atlas 
 
+% create training data object
+training_data.subject = subject;
+
 save_dir = create_processing_folder(index, output_folder_path);
 
 % perform linear registration 
@@ -52,6 +55,8 @@ zscore_fliped_diff = create_zscore_flip(zscore_out.zscore ...
     , hem_registration.linear_transf, hem_registration.dfield_path ...
     , dramms_path, save_dir);
 
+% compute zscore difference feature. Note: need to isolate affected
+% hemisphere.
 zscore_fliped_diff_ss = transform_to_ss(zscore_fliped_diff.zscore_fliped_registered_path ...
     , affine_data_S2A, non_lin_reg_info.inv_info.out_path ...
     , 'zscore_fliped_diff_ss', dramms_path, save_dir);
