@@ -15,9 +15,6 @@ function zscore_out = compute_zscore(registered, reference, hemi_masks, index, s
     % cmp zscore image
     zscore = double(double(registered)-reference.Img)./reference.STD;
 
-    % save zscore 
-    zscore_out.zscore = zscore;
-
     % apply threshold and compute mask indicating points with a value > 3 STD
     abn_img = zscore > threshold;
     
@@ -94,6 +91,8 @@ function zscore_out = compute_zscore(registered, reference, hemi_masks, index, s
      zscore(isnan(zscore(:))) = 0;
      zscore(isinf(zscore(:))) = 20;
      nifti_save(zscore, 'zscore_atlas_space', save_dir);
+     % save zscore 
+     zscore_out.zscore = zscore;
 
      % set paths for dramms, apply inv deformation field.
      zscore_out.r_h_mask_path = strcat(save_dir, '/right_hem_mask_atlas_space');

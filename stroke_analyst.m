@@ -5,9 +5,16 @@ atlas_path = "/home/makis/Documents/GitRepos/data_dependencies";
 output_folder_path = "/home/makis/Documents/GitRepos/processing_folder";
 
 %set variables
-subject = subject_info.subject;
-reference = subject_info.reference;
-index = subject_info.index;
+if exist('subject_info', 'var')
+    subject = subject_info.subject;
+    reference = subject_info.reference;
+    index = subject_info.index; 
+else
+    if ~exist('subject', 'var')
+        subject = imread(path);
+        index = 'bp0_98';
+    end
+end
 
 % aquire atlas 
 ttc_atlas = load(strcat(atlas_path, '/myatlasv1.mat'));
@@ -39,7 +46,13 @@ hemisphere_masks = hemisphere_masks.hemi_m;
 
 zscore_out = compute_zscore(registered, reference, hemisphere_masks, index, save_dir, non_lin_reg_info.inv_info.out_path, affine_data_S2A, dramms_path);
 
-register_atlas_hemisphere(reference, index, 1, hemi_tr, save_dir, atlas_path, dramms_path)
+hem_registration = register_atlas_hemisphere(reference, index, zscore_out.hemi_flag, hemi_tr, save_dir, atlas_path, dramms_path);
 
+zscore_fliped_diff = create_zscore_flip(zscore_out.zscore ...
+    , hem_registration.linear_transf, hem_registration.dfield_path ...
+    , dramms_path, save_dir);
 
+zscore_fliped_diff_ss = transform_to_ss(zscore_fliped_diff.zscore_fliped_registered_path ...
+    , affine_data_S2A, non_lin_reg_info.inv_info.out_path ...
+    , 'zscore_fliped_diff_ss', dramms_path, save_dir);
 

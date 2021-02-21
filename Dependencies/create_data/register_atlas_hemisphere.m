@@ -16,7 +16,7 @@ function out = register_atlas_hemisphere(img, index, hemi_flag, hemi_tr, save_di
         
         out.linear_transf = transf;
         
-        out.dfield_path = strcat(atlas_dir,'/hemisphere_transformations/', strcat(index, "_atlasHR"));
+        out.dfield_path = strcat(atlas_dir,'/hemisphere_transformations/', strcat(index, "_atlasHR_dfield"));
         
     else
         %compute transformations for this index.

@@ -7,6 +7,12 @@ function dramms_warp(img_path,dfield_path, out_path, name, dr_dir)
 
 %     cd(dr_dir);
 
+    % check for file extension
+    temp = convertStringsToChars(dfield_path);
+    if temp((end - 6): end) == ".nii.gz"
+        temp = temp(1:(end -7));
+        dfield_path = convertCharsToStrings(temp);
+    end
 
     command = strcat("/",dr_dir,"/dramms-warp ", img_path, ".nii", " ", dfield_path, ".nii.gz", " ",...
         out_path, "/",convertCharsToStrings(name), ".nii");
