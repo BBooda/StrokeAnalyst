@@ -1,5 +1,7 @@
 function training_data = create_hem_diff_color_features(subject, hem_registration, ...
     affine_data_S2A, non_lin_reg_info, save_dir, dramms_path)
+    % for every color channel: transforms color channel to ttc atlas space,
+    % utilizes hemisphere registration, perform hemisphere difference, transform to atlas space  
 
     % create a processing folder storing metadata
     if ~exist(strcat(save_dir, '/color_features'),'dir')
