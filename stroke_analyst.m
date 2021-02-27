@@ -12,7 +12,7 @@ if exist('subject_info', 'var')
 else
     if ~exist('subject', 'var')
         subject = imread(path);
-        index = 'bp0_98';
+        index = 'bp0_86';
     end
 end
 
@@ -49,15 +49,6 @@ hemisphere_masks = hemisphere_masks.hemi_m;
 
 zscore_out = compute_zscore(registered, reference, hemisphere_masks, index, save_dir, non_lin_reg_info.inv_info.out_path, affine_data_S2A, dramms_path);
 
-hem_registration = register_atlas_hemisphere(reference, index, zscore_out.hemi_flag, hemi_tr, save_dir, atlas_path, dramms_path);
-
-zscore_fliped_diff = create_zscore_flip(zscore_out.zscore ...
-    , hem_registration.linear_transf, hem_registration.dfield_path ...
-    , dramms_path, save_dir);
-
-% compute zscore difference feature. Note: need to isolate affected
-% hemisphere.
-zscore_fliped_diff_ss = transform_to_ss(zscore_fliped_diff.zscore_fliped_registered_path ...
-    , affine_data_S2A, non_lin_reg_info.inv_info.out_path ...
-    , 'zscore_fliped_diff_ss', dramms_path, save_dir);
+hem_diff_features = create_hem_diff_feat(reference, index, zscore_out, hemi_tr, affine_data_S2A, ...
+    non_lin_reg_info, save_dir, atlas_path, dramms_path);
 

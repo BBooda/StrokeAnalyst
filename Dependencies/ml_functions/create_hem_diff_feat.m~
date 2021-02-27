@@ -1,0 +1,4 @@
+function create_hem_diff_feat()
+    % create hemisphere difference features
+    % perform hemisphere registration, perform 
+end
