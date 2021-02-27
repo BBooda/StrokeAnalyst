@@ -6,22 +6,22 @@ function [feature_vector, labels] = create_ml_features(hemi_mask,varargin)
     
     % default values 
     neigh = 3;
-    filtering = 'average';
+    
     % parse input data 
     for i = 1:length(varargin)
         if strcmp(varargin{i}, 'subject')
-            subject = bsxfun(@times, varargin{i+1}, cast(hemi_mask, 'like', varargin{i+1}));
+            subject = bsxfun(varargin{i+1}, cast(hemi_mask, 'like', varargin{i+1}));
         end
         if strcmp(varargin{i}, 'zscore')
-            zscore = bsxfun(@times, varargin{i+1}, cast(hemi_mask, 'like', varargin{i+1}));
+            zscore = bsxfun(varargin{i+1}, cast(hemi_mask, 'like', varargin{i+1}));
         end
         if strcmp(varargin{i}, 'zscore_dif')
-            zsc_dif = bsxfun(@times, varargin{i+1}, cast(hemi_mask, 'like', varargin{i+1}));
+            zsc_dif = bsxfun(varargin{i+1}, cast(hemi_mask, 'like', varargin{i+1}));
         end
         if strcmp(varargin{i}, 'color_features')
-            color_f.red = bsxfun(@times, varargin{i+1}.red_ch_diff, cast(hemi_mask, 'like', varargin{i+1}.red_ch_diff));
-            color_f.green = bsxfun(@times, varargin{i+1}.green_ch_diff, cast(hemi_mask, 'like', varargin{i+1}.green_ch_diff));
-            color_f.blue = bsxfun(@times, varargin{i+1}.blue_ch_diff, cast(hemi_mask, 'like', varargin{i+1}.blue_ch_diff));
+            color_f.red = bsxfun(varargin{i}.red_ch_diff, cast(hemi_mask, 'like', varargin{i}.red_ch_diff));
+            color_f.green = bsxfun(varargin{i}.green_ch_diff, cast(hemi_mask, 'like', varargin{i}.green_ch_diff));
+            color_f.blue = bsxfun(varargin{i}.blue_ch_diff, cast(hemi_mask, 'like', varargin{i}.blue_ch_diff));
         end
         if strcmp(varargin{i}, 'ground_truth')
             labels = varargin{i+1};
@@ -37,10 +37,11 @@ function [feature_vector, labels] = create_ml_features(hemi_mask,varargin)
     % follow the default method and create a feature vector containing
     % subject intesities zscore map and zscore difference map using a 3x3
     % average filter
+    Y = [];
     if exist('color_f', 'var')
         X = zeros(numel(zscore), 19);
     else
-        X = zeros(numel(zscore), 13);
+        X = zeros(num_count, 13);
     end
     
     % create anonymous function to specify the desired filter and create the
@@ -94,6 +95,5 @@ function [feature_vector, labels] = create_ml_features(hemi_mask,varargin)
     feature_vector = X;    
     
     if ~exist('labels', 'var')
-        labels = nan;
-    end
+        
 end

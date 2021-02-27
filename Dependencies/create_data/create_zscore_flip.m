@@ -1,4 +1,5 @@
 function out = create_zscore_flip(zscore, affine_info, dfield_path, dramms_dir,save_dir)
+    % !!create zscore difference feature!!
     % zscore already exists in TTC atlas space, so load affine info 
     % for atlas hemisphere transformation 
     movingRefObj_T1 = affine_info.mov;
