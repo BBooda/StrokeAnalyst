@@ -12,7 +12,7 @@ if exist('subject_info', 'var')
 else
     if ~exist('subject', 'var')
         subject = imread(path);
-        index = 'bp0_86';
+        index = input("specify brain slice index:",'s');
     end
 end
 
@@ -49,6 +49,9 @@ hemisphere_masks = hemisphere_masks.hemi_m;
 
 zscore_out = compute_zscore(registered, reference, hemisphere_masks, index, save_dir, non_lin_reg_info.inv_info.out_path, affine_data_S2A, dramms_path);
 
+% create hemisphere difference features
 hem_diff_features = create_hem_diff_feat(reference, index, zscore_out, hemi_tr, affine_data_S2A, ...
-    non_lin_reg_info, save_dir, atlas_path, dramms_path);
+    non_lin_reg_info, save_dir, atlas_path, dramms_path, 'create_color_features', subject);
+
+
 

@@ -1,5 +1,5 @@
 function features = create_hem_diff_feat(reference, index, zscore_out, hemi_tr, affine_data_S2A, ...
-    non_lin_reg_info, save_dir, atlas_path, dramms_path)
+    non_lin_reg_info, save_dir, atlas_path, dramms_path, varargin)
     % orchestration function to create hemisphere features
     % create hemisphere difference features
     % perform hemisphere registration
@@ -18,6 +18,13 @@ function features = create_hem_diff_feat(reference, index, zscore_out, hemi_tr, 
     
     features.zsc_dif_ss = zscore_fliped_diff_ss.img_ss;
     
-    
+    % if specified as a key value pair, create color hemisphere features 
+    if ~isempty(varargin)
+        if strcmp(varargin{1}, "create_color_features") && ~isempty(varargin{2})
+            color_features = create_hem_diff_color_features(varargin{2}, hem_registration, ...
+                affine_data_S2A, non_lin_reg_info, save_dir, dramms_path);
+            features.color_features = color_features;
+        end
+    end
     
 end
