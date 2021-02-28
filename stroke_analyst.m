@@ -25,9 +25,6 @@ hemi_tr = load(strcat(atlas_path, '/hemisphere_transformations','/hemisphere_tra
 
 %% register to ttc_atlas 
 
-% create training data object
-training_data.subject = subject;
-
 save_dir = create_processing_folder(index, output_folder_path);
 
 % perform linear registration 
@@ -53,5 +50,24 @@ zscore_out = compute_zscore(registered, reference, hemisphere_masks, index, save
 hem_diff_features = create_hem_diff_feat(reference, index, zscore_out, hemi_tr, affine_data_S2A, ...
     non_lin_reg_info, save_dir, atlas_path, dramms_path, 'create_color_features', subject);
 
+% create feature vector for both 13 and 19 features 
+% decide hemisphere mask 
+if zscore_out.hemi_flag == 1
+    hemi_mask = zscore_out.ss_RHM;
+else
+    hemi_mask = zscore_out.ss_LHM;
+end
+% create training data object
+training_data.subject = bsxfun(@times, subject, cast(hemi_mask, 'like', subject));
 
+f_v_13 = create_ml_features(hemi_mask, 'subject', subject, 'zscore',...
+    zscore_out.ss_zscore, 'zscore_dif', hem_diff_features.zsc_dif_ss);
 
+f_v_19 = create_ml_features(hemi_mask, 'subject', subject, 'zscore',...
+    zscore_out.ss_zscore, 'zscore_dif', hem_diff_features.zsc_dif_ss, ...
+    'color_features', hem_diff_features.color_features);
+
+training_data.f_v_13 = f_v_13;
+training_data.f_v_19 = f_v_19;  
+
+% save(strcat(save_dir, '/all'));
