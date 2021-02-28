@@ -12,7 +12,8 @@ if exist('subject_info', 'var')
 else
     if ~exist('subject', 'var')
         subject = imread(path);
-        index = input("specify brain slice index:",'s');
+%         index = input("specify brain slice index:",'s');
+        index = path(end - 9: end - 4);
     end
 end
 
@@ -70,4 +71,6 @@ f_v_19 = create_ml_features(hemi_mask, 'subject', subject, 'zscore',...
 training_data.f_v_13 = f_v_13;
 training_data.f_v_19 = f_v_19;  
 
-% save(strcat(save_dir, '/all'));
+ml_p = ml_prediction(model, f_v_19, subject);
+
+saveExcept(convertStringsToChars(strcat(save_dir, '/all')), 'model');

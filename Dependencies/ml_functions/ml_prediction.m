@@ -1,8 +1,8 @@
-function [out,scores] = ml_prediction(model, f_v, varargin)
+function [out,scores] = ml_prediction(model, f_v, subject,varargin)
     
     [pre, scores] = predict(model, f_v);
     
-    out = str2double(cell2mat(pre));
+    out = str2num(cell2mat(pre));
 
     out = reshape(out, size(rgb2gray(subject)));
     
