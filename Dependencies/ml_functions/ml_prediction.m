@@ -1,11 +1,20 @@
-function out = ml_prediction(model, subject, hemi_mask, zscore, zscore_dif)
-    % create feature vector 
-    f_v_13 = create_ml_features(hemi_mask, 'subject', subject, 'zscore',...
-        zscore, 'zscore_dif', zscore_dif);
+function [out,scores] = ml_prediction(model, f_v, varargin)
     
-    [pre, scores] = predict(model, f_v_13);
+    [pre, scores] = predict(model, f_v);
     
-    out = str2num(cell2mat(pre));
+    out = str2double(cell2mat(pre));
 
     out = reshape(out, size(rgb2gray(subject)));
+    
+    % select morthological operation to filter output
+    morph_oper = 'areafilt'; % default value 
+    for i = 1:length(varargin)
+        if strcmp(varargin{i}, 'MorphOperation')
+            morph_oper = varargin{i+1};
+        end
+    end
+    
+    if strcmp(morph_oper, 'areafilt')
+        out = bwareafilt(imbinarize(out),5); 
+    end
 end
