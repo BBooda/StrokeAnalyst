@@ -72,5 +72,7 @@ training_data.f_v_13 = f_v_13;
 training_data.f_v_19 = f_v_19;  
 
 ml_p = ml_prediction(model, f_v_19, subject);
+imshow(ml_p);
 
+imwrite(ml_p, strcat(save_dir,'/',index, '_pre.jpg'))
 saveExcept(convertStringsToChars(strcat(save_dir, '/all')), 'model');
