@@ -3,8 +3,8 @@ atlas_add = containers.Map('KeyType','double','ValueType','any');
 % set variables 
 dramms_path = "home/makis/myprograms/dramms/bin";
 save_dir = '/home/makis/Documents/GitRepos/data_dependencies/atlas_final';
-folder_path = '~/Documents/GitRepos/data_dependencies/atlas_final/bn2_54';
-index = 'bn2_54';
+folder_path = '~/Documents/GitRepos/data_dependencies/atlas_final/bp0_50';
+index = 'bp0_50';
 save_dir = strcat(save_dir, '/', index);
 imgs = load_dir_imgs(strcat('b'), folder_path);
 mkdir(strcat(save_dir, '/transformations'));
@@ -36,6 +36,7 @@ for i = 1:length(imgs_to_register)
     temp{counter + 1} = flip(imgs_to_register{i}, 2);
     counter = counter + 2;
 end
+temp{end + 1} = flip(template, 2);
 imgs_to_register = temp; 
 clear('temp');
 
@@ -84,6 +85,9 @@ for i = 1:length(linear_paths)
     
     registered{i} = niftiread(strcat( trans_path, '/', 'registered_', ...
         registered_name, '_to_average.nii'));
+    disp("-------------------------------------------------------------------------------")
+    disp(strcat("This is ", num2str(i), "/", num2str(length(linear_out))))
+    disp("-------------------------------------------------------------------------------")
 end
 
 % montage(registered);
@@ -116,6 +120,10 @@ montage(temp);
 %% exclude and recompute average
 
 first_time = false;
+mask = imbinarize(template);
+for i = 1:length(new_regi)
+    new_regi{i} = new_regi{i} .* mask;
+end
 
 concat = [];
 concat = cat(3, concat, (template));
@@ -129,10 +137,21 @@ S = std(double(concat), 0,3);
 
 % save('std_img', 'S');
 
-
+montage({uint8(a_slice), adapthisteq(uint8(a_slice))});
 % save registered 
 save(strcat(save_dir, '/registered'));
 
+%% alternative loading 
+% create atlas map object 
+atlas_add = containers.Map('KeyType','double','ValueType','any');
+% set variables 
+dramms_path = "home/makis/myprograms/dramms/bin";
+save_dir = '/home/makis/Documents/GitRepos/data_dependencies/atlas_final';
+folder_path = '~/Documents/GitRepos/data_dependencies/atlas_final/bn5_68';
+index = 'bn5_68';
+save_dir = strcat(save_dir, '/', index);
+% imgs = load_dir_imgs(strcat('b'), folder_path);
+mkdir(strcat(save_dir, '/transformations'));
 
 
 
