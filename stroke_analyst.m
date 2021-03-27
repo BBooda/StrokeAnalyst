@@ -4,6 +4,16 @@ dramms_path = "home/makis/myprograms/dramms/bin";
 atlas_path = "/home/makis/Documents/GitRepos/data_dependencies";
 output_folder_path = "/home/makis/Documents/GitRepos/processing_folder";
 
+% load allen masks and anatomical regions dictionary
+allen_masks = load(fullfile(atlas_path, 'allen_masks.mat'));
+allen_masks = allen_masks.allen_masks;
+
+fname = strcat(atlas_path, '/acronyms.json');
+fid = fopen(fname);
+raw = fread(fid,inf);
+str = char(raw');
+dictionary = jsondecode(str);
+
 %set variables
 if exist('subject_info', 'var')
     subject = subject_info.subject;
@@ -76,3 +86,12 @@ imshow(ml_p);
 
 imwrite(ml_p, strcat(save_dir,'/',index, '_pre.jpg'))
 saveExcept(convertStringsToChars(strcat(save_dir, '/all')), 'model');
+
+compute_volumetric_data(ml_p, zscore_out.ss_LHM, zscore_out.ss_RHM, index, save_dir)
+
+% transform ml_p to atlas space for region naming 
+ml_p_atlas_s = transform_to_as(ml_p, 'ml_prediction_as', ...
+        affine_data_S2A, non_lin_reg_info.regi_output_path_dfield, ...
+        save_dir, dramms_path);
+
+region_naming(dictionary, allen_masks, index, ml_p_atlas_s.def_transformed_img, save_dir)
