@@ -16,21 +16,43 @@ end
 %% create visualization data 
 % save lesion mask, hemisphere masks, zscore map, registered slice and
 % reference slice
-% load('all');
+% READ ME
+% 1. Define parent folder containg sub folders that contain a all.mat file
+% 2. load allen masks and json dictionary 
+% load allen masks and anatomical regions dictionary
+atlas_path = "/home/makis/Documents/GitRepos/data_dependencies";
+allen_masks = load(fullfile(atlas_path, 'allen_masks.mat'));
+allen_masks = allen_masks.allen_masks;
 
-parent_folder = '/home/makis/Documents/GitRepos/processing_folder/finalTests/-n003-4_back';
+fname = strcat(atlas_path, '/acronyms.json');
+fid = fopen(fname);
+raw = fread(fid,inf);
+str = char(raw');
+dictionary = jsondecode(str);
+
+%% continue execution
+
+parent_folder = '/home/makis/Documents/GitRepos/processing_folder/finalTests/-n003-14a';
 S = dir(fullfile(parent_folder));
+
+return_adr = S(1).folder;
+
 folders = cell(1, length(S));
+folder_name = cell(1, length(S));
 for i = 1:length(S)
     if length(S(i).name) > 2 && S(i).isdir
         folders{i} = fullfile(S(i).folder, S(i).name);
+        folder_name{i} = S(i).name;
     end
 end
 folders(cellfun('isempty',folders)) = [];
+folder_name(cellfun('isempty',folder_name)) = [];
 
 for i = 1:length(folders)
     load(fullfile(folders{i}, 'all.mat'));
     
+    % workaround 
+    original_save_dir = save_dir;
     
     % create visualization data directory
     temp = strsplit(save_dir, 'er/');
@@ -58,6 +80,48 @@ for i = 1:length(folders)
     imshow(zscore_out.zscore, [3 10]); colormap(jet);
     saveas(fig, strcat(save_dir, "/zscore_", num2str(index), ".jpg"));
     close(fig);
-
+    
+    % workaround to use absolute paths from all.mat file
+    % this is mandatory for affected region identification 
+    % steps: 1. move folder to its original location, 2. perform all
+    % necessary actions 3. move folder back
+    movefile(folders{i}, "/home/makis/Documents/GitRepos/processing_folder");
+    
+    % affected region identification
+    % load masks, etc. call function
+    % transform ml_p to atlas space for region naming 
+    try
+        ml_p_atlas_s = transform_to_as(ml_p, 'ml_prediction_as', ...
+            affine_data_S2A, non_lin_reg_info.regi_output_path_dfield, ...
+            save_dir, dramms_path);
+    
+        region_naming(dictionary, allen_masks, index, ...
+            ml_p_atlas_s.def_transformed_img, original_save_dir)
+    catch
+        disp("region namining exeption");
+    end
+    
+    % move folder back 
+    movefile(fullfile("/home/makis/Documents/GitRepos/processing_folder" , folder_name{i}),...
+        return_adr);
+    
+    try
+        % copy file to affect regions txt to visualization folder
+        copyfile(fullfile(folders{i}, "affected_regions.txt"), save_dir);
+    catch
+        disp('affected_regions.txt does not exist');
+    end
+    
+    try
+        % remove transformation .nii files
+        nii_paths = dir(fullfile(save_dir, '*.nii'));
+        for j = 1:length(nii_paths)
+            delete(fullfile(test(j).folder,test(j).name));
+        end
+    catch
+        disp('remove file exeption');
+    end
 end
+
+disp("----------FINISHED------------");
    
