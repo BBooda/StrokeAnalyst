@@ -60,4 +60,33 @@ for i = 1:length(folders)
     close(fig);
 
 end
+
+%% montage brains
+path = "/home/makis/Documents/GitRepos/processing_folder/finalTests/-n003-14a";
+S = dir(fullfile(path));
+folders = cell(1, length(S));
+for i = 1:length(S)
+    if length(S(i).name) > 2 && S(i).isdir
+        if ~(S(i).name(1:5) == "visua")
+            folders{i} = fullfile(S(i).folder, S(i).name);
+        end
+    end
+end
+folders(cellfun('isempty',folders)) = [];
+pairs = cell(1, length(folders));
+
+for i = 1:length(folders)
+    % load files 
+    load(fullfile(folders{i}, 'all'), 'ml_p', 'index');
+    
+    % load image 
+    manual = imread(fullfile(folders{i}, strcat(index, '-mmask.jpg')));
+    manual = ~imbinarize(rgb2gray(manual));
+    
+    pairs{i} = imfuse(manual, ml_p);
+end
+
+fig = figure();
+montage(pairs);
+saveas(fig, strcat(S(1).folder, "/montage.jpg"));
    
