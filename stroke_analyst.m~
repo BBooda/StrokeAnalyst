@@ -82,7 +82,7 @@ training_data.f_v_13 = f_v_13;
 training_data.f_v_19 = f_v_19;  
 
 ml_p = ml_prediction(model, f_v_19, subject);
-% imshow(ml_p);
+imshow(ml_p);
 
 imwrite(ml_p, strcat(save_dir,'/',index, '_pre.jpg'))
 saveExcept(convertStringsToChars(strcat(save_dir, '/all')), 'model');
@@ -99,24 +99,3 @@ ml_p_atlas_s = transform_to_as(ml_p, 'ml_prediction_as', ...
         save_dir, dramms_path);
 
 region_naming(dictionary, allen_masks, index, ml_p_atlas_s.def_transformed_img, new_save_dir);
-
-% save images 
-% save registered and reference
-imwrite(uint8(registered), strcat(new_save_dir, "/", num2str(index), "_registered.jpg"));
-imwrite(uint8(reference.Img), strcat(new_save_dir, "/", num2str(index), "_reference.jpg"));
-
-% create lesion overlays
-les = blend_img(subject, ml_p, 60);
-imwrite(les, strcat(new_save_dir, "/", num2str(index), ".jpg"));
-
-left_hemi = blend_img(subject, zscore_out.ss_LHM, 60);
-imwrite(left_hemi, strcat(new_save_dir, "/left_", num2str(index), ".jpg"));
-
-right_hem = blend_img(subject, zscore_out.ss_RHM, 60);
-imwrite(right_hem, strcat(new_save_dir, "/right_", num2str(index), ".jpg"));
-fig = figure();
-imshow(zscore_out.zscore, [3 10]); colormap(jet);
-saveas(fig, strcat(new_save_dir, "/zscore_", num2str(index), ".jpg"));
-close(fig);
-
-disp("---------FINISHED---------");
