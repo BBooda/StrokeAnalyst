@@ -6,10 +6,20 @@ output_folder_path = "/home/makis/Documents/GitRepos/processing_folder";
 % aquire atlas 
 ttc_atlas = load(strcat(atlas_path, '/myatlasv1.mat'));
 
+% load allen masks and anatomical regions dictionary
+allen_masks = load(fullfile(atlas_path, 'allen_masks.mat'));
+allen_masks = allen_masks.allen_masks;
+
+fname = strcat(atlas_path, '/acronyms.json');
+fid = fopen(fname);
+raw = fread(fid,inf);
+str = char(raw');
+dictionary = jsondecode(str);
+
 % load hemisphere transformations 
 hemi_tr = load(strcat(atlas_path, '/hemisphere_transformations','/hemisphere_transformations.mat'));
 %% run folder
-indexies_c = {'bn0_22', 'bn1_82', 'bn3_08', 'bp1_34'};
+indexies_c = {'bn3_08', 'bn4_24', 'bn5_40', 'bp0_14', 'bp1_10'};
 for i = 1:numel(indexies_c)
     path = strcat(folder_path, '/', indexies_c{i}, '.jpg');
     
@@ -23,7 +33,7 @@ for i = 1:numel(indexies_c)
 %         reference = subject_info.reference;
 %         index = subject_info.index; 
 %     else
-%         if ~exist('subject', 'var')
+%         if ~exist('subject', 'var')   
 %             subject = imread(path);
 %     %         index = input("specify brain slice index:",'s');
 %             index = path(end - 9: end - 4);
@@ -86,5 +96,39 @@ for i = 1:numel(indexies_c)
 
     imwrite(ml_p, strcat(save_dir,'/',index, '_pre.jpg'))
     saveExcept(convertStringsToChars(strcat(save_dir, '/all')), 'model');
+    
+    % save data to visualization folder 
+    mkdir(save_dir, strcat('vis_',index));
+    new_save_dir = fullfile(save_dir, strcat('vis_',index));
+
+    compute_volumetric_data(ml_p, zscore_out.ss_LHM, zscore_out.ss_RHM, index, new_save_dir)
+
+    % transform ml_p to atlas space for region naming 
+    % ml_p_atlas_s = transform_to_as(ml_p, 'ml_prediction_as', ...
+    %         affine_data_S2A, non_lin_reg_info.regi_output_path_dfield, ...
+    %         save_dir, dramms_path);
+    % 
+    % region_naming(dictionary, allen_masks, index, ml_p_atlas_s.def_transformed_img, new_save_dir);
+
+    % save images 
+    % save registered and reference
+    imwrite(uint8(registered), strcat(new_save_dir, "/", num2str(index), "_registered.jpg"));
+    imwrite(uint8(reference.Img), strcat(new_save_dir, "/", num2str(index), "_reference.jpg"));
+
+    % create lesion overlays
+    les = blend_img(subject, ml_p, 60);
+    imwrite(les, strcat(new_save_dir, "/", num2str(index), ".jpg"));
+
+    left_hemi = blend_img(subject, zscore_out.ss_LHM, 60);
+    imwrite(left_hemi, strcat(new_save_dir, "/left_", num2str(index), ".jpg"));
+
+    right_hem = blend_img(subject, zscore_out.ss_RHM, 60);
+    imwrite(right_hem, strcat(new_save_dir, "/right_", num2str(index), ".jpg"));
+    fig = figure();
+    imshow(zscore_out.zscore, [3 10]); colormap(jet);
+    saveas(fig, strcat(new_save_dir, "/zscore_", num2str(index), ".jpg"));
+    close(fig);
+
+    disp("---------FINISHED---------");
     
 end
