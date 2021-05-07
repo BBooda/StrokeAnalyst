@@ -25,5 +25,5 @@ function linear_registration(app, subject, reference)
     app.affine_data_S2A = create_affine_data(aff_out, subject, reference,... 
     app.sub_T.index, app.save_dir, movingRefObj, fixedRefObj);
 
-     cd(app.save_dir);
+    cd(app.save_dir);
 end

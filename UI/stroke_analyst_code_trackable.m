@@ -270,16 +270,16 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
         end
         
         %7TH FUNCTION
-        function linear_registration(app, subject, reference)
+        function linear_registration_ui(app, subject, reference)
 
             [~,~,chann_test] = size(subject);
 
             if chann_test > 1 
                 % call linear registration function given as input the
                 % coresponding linear transformation
-                [aff_out, ~,movingRefObj,fixedRefObj] = linear_registration(app,rgb2gray(subject),reference, app.SetDropDown.Value);
+                [aff_out, ~,movingRefObj,fixedRefObj] = linear_registration(rgb2gray(subject),reference, app.SetDropDown.Value);
             else
-                [aff_out, ~,movingRefObj,fixedRefObj] = linear_registration(app,(subject),reference, app.SetDropDown.Value);
+                [aff_out, ~,movingRefObj,fixedRefObj] = linear_registration((subject),reference, app.SetDropDown.Value);
             end
 
             %save tranformation information
@@ -297,7 +297,7 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
             app.affine_data_S2A = create_affine_data(aff_out, subject, reference,... 
             app.sub_T.index, app.save_dir, movingRefObj, fixedRefObj);
 
-             cd(app.save_dir);
+            cd(app.save_dir);
         end
     
         
@@ -1365,7 +1365,7 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
                     create_processing_folder(app);
                     
                     % perform linear registration 
-                    linear_registration(app, app.imgs{strcmp(app.img_names, app.IndexiesListBox.Value)}, app.reference.Img);
+                    linear_registration_ui(app, app.imgs{strcmp(app.img_names, app.IndexiesListBox.Value)}, app.reference.Img);
                     
 %                     my_log(app, 'TEST--NON Linear Block');
                     non_linear_registration(app);
@@ -1399,7 +1399,7 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
                         create_processing_folder(app);
                         
                         % perform linear registration 
-                        linear_registration(app, app.imgs{strcmp(app.img_names, app.IndexiesListBox.Value)}, app.reference.Img);
+                        linear_registration_ui(app, app.imgs{strcmp(app.img_names, app.IndexiesListBox.Value)}, app.reference.Img);
                         
                         non_linear_registration(app);
                         
