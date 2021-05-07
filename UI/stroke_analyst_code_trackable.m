@@ -271,16 +271,17 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
         
         %7TH FUNCTION
         function linear_registration(app, subject, reference)
-            
+
             [~,~,chann_test] = size(subject);
-            
+
             if chann_test > 1 
-%                 [aff_out, ~,movingRefObj,fixedRefObj] = multimodal_affine_reg(rgb2gray(subject),reference);
-                [aff_out, ~,movingRefObj,fixedRefObj] = linear_regi(app,rgb2gray(subject),reference);
+                % call linear registration function given as input the
+                % coresponding linear transformation
+                [aff_out, ~,movingRefObj,fixedRefObj] = linear_registration(app,rgb2gray(subject),reference, app.SetDropDown.Value);
             else
-                [aff_out, ~,movingRefObj,fixedRefObj] = linear_regi(app,(subject),reference);
+                [aff_out, ~,movingRefObj,fixedRefObj] = linear_registration(app,(subject),reference, app.SetDropDown.Value);
             end
-            
+
             %save tranformation information
             app.sub_T.index = app.IndexiesListBox.Value;
             app.sub_T.subject = subject;
@@ -288,22 +289,14 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
             app.sub_T.aff_out = aff_out;
             app.sub_T.movingRefObj = movingRefObj;
             app.sub_T.fixedRefObj = fixedRefObj;
-            
+
             % inverse linear transfor
             app.sub_T.inv_aff = invert(aff_out.Transformation);
-            
-            %create nifti files, prepare for dramms non linear registration 
-            
-%             create_nifti({app.reference.Img}, app.save_dir, 'reference', [0.021 0.021 0 1]);
-            nifti_save(app, app.reference.Img, 'reference', app.save_dir);
-%             subject_dir = "subject_registration";
-%              if ~exist(subject_dir, 'dir')
-%                     mkdir(subject_dir);
-%              end
-%             create_nifti({aff_out.RegisteredImage}, app.save_dir, 'aff_sub_to_average', [0.021 0.021 0 1]);
-             nifti_save(app, aff_out.RegisteredImage, 'aff_sub_to_average', app.save_dir);
-             
-             % because create nifti is not used.
+
+            % create nifti files for dramms non linear registration
+            app.affine_data_S2A = create_affine_data(aff_out, subject, reference,... 
+            app.sub_T.index, app.save_dir, movingRefObj, fixedRefObj);
+
              cd(app.save_dir);
         end
     
