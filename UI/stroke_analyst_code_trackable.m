@@ -303,7 +303,7 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
     
         
         %8TH FUNCTION
-        function non_linear_registration(app)
+        function non_linear_registration_ui(app)
             %determine reference image (atlas image) path.
             ref_path = strcat(app.save_dir, '/reference.nii');
             
@@ -1371,6 +1371,19 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
                     % perform linear registration 
                     linear_registration_ui(app, app.imgs{strcmp(app.img_names, app.IndexiesListBox.Value)}, app.reference.Img);
                     
+                    non_lin_reg_info = non_linear_registration(app.sub_T.index, app.save_dir, app.paths{5});
+
+                    % load registered image
+                    registered = niftiread(non_lin_reg_info.regi_output_path);
+                    
+                    zscore_out = compute_zscore(registered, app.reference, app.hemi_masks, app.sub_T.index, app.save_dir,...
+                        non_lin_reg_info.inv_info.out_path, app.affine_data_S2A, app.paths{5});
+                    
+                    app.sub_T.zscore = zscore_out.zscore;
+                    
+                    imshow(app.sub_T.subject, 'Parent', app.ResAxes1);
+                    imshow(app.sub_T.zscore,[3 10], 'Parent',app.ResAxes2);
+                    colormap(app.ResAxes2, jet); 
 %                     my_log(app, 'TEST--NON Linear Block');
 %                     non_linear_registration(app);
 %                     
