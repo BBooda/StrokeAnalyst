@@ -270,16 +270,16 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
         end
         
         %7TH FUNCTION
-        function linear_registration_ui(app, subject, reference)
+         function linear_registration_ui(app, subject, reference)
 
             [~,~,chann_test] = size(subject);
 
             if chann_test > 1 
                 % call linear registration function given as input the
                 % coresponding linear transformation
-                [aff_out, ~,movingRefObj,fixedRefObj] = linear_registration(rgb2gray(subject),reference, app.SetDropDown.Value);
+                [aff_out, ~,movingRefObj,fixedRefObj] = linear_registration(rgb2gray(subject),reference, "Ttype", app.SetDropDown.Value);
             else
-                [aff_out, ~,movingRefObj,fixedRefObj] = linear_registration((subject),reference, app.SetDropDown.Value);
+                [aff_out, ~,movingRefObj,fixedRefObj] = linear_registration((subject),reference, "Ttype", app.SetDropDown.Value);
             end
 
             %save tranformation information
@@ -298,7 +298,7 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
             app.sub_T.index, app.save_dir, movingRefObj, fixedRefObj);
 
             cd(app.save_dir);
-        end
+         end
     
         
         %8TH FUNCTION
@@ -1368,19 +1368,19 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
                     linear_registration_ui(app, app.imgs{strcmp(app.img_names, app.IndexiesListBox.Value)}, app.reference.Img);
                     
 %                     my_log(app, 'TEST--NON Linear Block');
-                    non_linear_registration(app);
-                    
-                    cmp_zscore(app);
-                    
-                    imshow(app.sub_T.subject, 'Parent', app.ResAxes1);
-                    imshow(app.sub_T.zscore,[3 10], 'Parent',app.ResAxes2);
-                    colormap(app.ResAxes2, jet); 
-                    
-                    app.sub_T.lesion = ml_lesion_pred(app);
-%                     create_nifti({app.sub_T.lesion}, app.save_dir, 'lesion_pred_ML', [0.021 0.021 0 1]);
-                    nifti_save(app,app.sub_T.lesion, 'lesion_pred_ML', app.save_dir);
-                        
-                    cmp_area_save_res(app, app.sub_T.lesion, app.sub_T.ss_LHM, app.sub_T.ss_RHM); 
+%                     non_linear_registration(app);
+%                     
+%                     cmp_zscore(app);
+%                     
+%                     imshow(app.sub_T.subject, 'Parent', app.ResAxes1);
+%                     imshow(app.sub_T.zscore,[3 10], 'Parent',app.ResAxes2);
+%                     colormap(app.ResAxes2, jet); 
+%                     
+%                     app.sub_T.lesion = ml_lesion_pred(app);
+% %                     create_nifti({app.sub_T.lesion}, app.save_dir, 'lesion_pred_ML', [0.021 0.021 0 1]);
+%                     nifti_save(app,app.sub_T.lesion, 'lesion_pred_ML', app.save_dir);
+%                         
+%                     cmp_area_save_res(app, app.sub_T.lesion, app.sub_T.ss_LHM, app.sub_T.ss_RHM); 
                 else
                     app.RIndexiesListBox.Items = app.img_names;
                     
@@ -1401,21 +1401,21 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
                         % perform linear registration 
                         linear_registration_ui(app, app.imgs{strcmp(app.img_names, app.IndexiesListBox.Value)}, app.reference.Img);
                         
-                        non_linear_registration(app);
-                        
-                        cmp_zscore(app);
-                        
-                        imshow(app.sub_T.subject, 'Parent', app.ResAxes1);
-                        imshow(app.sub_T.zscore,[3 10], 'Parent',app.ResAxes2);
-                        colormap(app.ResAxes2, jet); 
-                        
-                        app.sub_T.lesion = ml_lesion_pred(app);
-%                         create_nifti({app.sub_T.lesion}, app.save_dir, 'lesion_pred_ML', [0.021 0.021 0 1]);
-                        nifti_save(app, app.sub_T.lesion, 'lesion_pred_ML', app.save_dir);
-                        
-                        cmp_area_save_res(app, app.sub_T.lesion, app.sub_T.ss_LHM, app.sub_T.ss_RHM); 
-                        
-                        app.results{i} = app.sub_T; 
+%                         non_linear_registration(app);
+%                         
+%                         cmp_zscore(app);
+%                         
+%                         imshow(app.sub_T.subject, 'Parent', app.ResAxes1);
+%                         imshow(app.sub_T.zscore,[3 10], 'Parent',app.ResAxes2);
+%                         colormap(app.ResAxes2, jet); 
+%                         
+%                         app.sub_T.lesion = ml_lesion_pred(app);
+% %                         create_nifti({app.sub_T.lesion}, app.save_dir, 'lesion_pred_ML', [0.021 0.021 0 1]);
+%                         nifti_save(app, app.sub_T.lesion, 'lesion_pred_ML', app.save_dir);
+%                         
+%                         cmp_area_save_res(app, app.sub_T.lesion, app.sub_T.ss_LHM, app.sub_T.ss_RHM); 
+%                         
+%                         app.results{i} = app.sub_T; 
                     end
                 end
             end
@@ -1553,7 +1553,9 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
         % Button pushed function: lineartransformButton
         function lineartransformButtonPushed(app, event)
             app.reference = find_reference_img(app, app.IndexiesListBox.Value);
-            aff_out = app.linear_regi(rgb2gray(app.imgs{strcmp(app.img_names, app.IndexiesListBox.Value)}), app.reference.Img);
+%             aff_out = app.linear_regi(rgb2gray(app.imgs{strcmp(app.img_names, app.IndexiesListBox.Value)}), app.reference.Img);
+            aff_out = linear_registration(rgb2gray(app.imgs{strcmp(app.img_names, app.IndexiesListBox.Value)}),...
+                app.reference.Img, "Ttype", app.SetDropDown.Value);
             imshow(imfuse(aff_out.RegisteredImage, app.reference.Img, 'falsecolor'), 'Parent', app.TestLinAxes);
         end
 
