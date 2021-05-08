@@ -109,6 +109,7 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
         model_path % absolute model path
         model_names % model names. used to choose between models.
         hemi_masks % hemisphere masks dictionary
+        affine_data_S2A % create linear transformation output struct 
     end
     
     methods (Access = private)
@@ -1345,6 +1346,9 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
         function RUNButtonPushed(app, event)
             % set original directory to return.
             original_dir = pwd;
+            
+            % temporary 
+            app.model = true;
             
             if isempty(app.model)
                app.LogTextArea.Value = [app.LogTextArea.Value; "Model isnt loaded! Please load the model."; "Go to Settings -> load model."]; 
