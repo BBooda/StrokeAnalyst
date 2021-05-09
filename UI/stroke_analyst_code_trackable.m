@@ -1484,21 +1484,80 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
                         % perform linear registration 
                         linear_registration_ui(app, app.imgs{strcmp(app.img_names, app.IndexiesListBox.Value)}, app.reference.Img);
                         
-%                         non_linear_registration(app);
-%                         
-%                         cmp_zscore(app);
-%                         
-%                         imshow(app.sub_T.subject, 'Parent', app.ResAxes1);
-%                         imshow(app.sub_T.zscore,[3 10], 'Parent',app.ResAxes2);
-%                         colormap(app.ResAxes2, jet); 
-%                         
-%                         app.sub_T.lesion = ml_lesion_pred(app);
-% %                         create_nifti({app.sub_T.lesion}, app.save_dir, 'lesion_pred_ML', [0.021 0.021 0 1]);
-%                         nifti_save(app, app.sub_T.lesion, 'lesion_pred_ML', app.save_dir);
-%                         
-%                         cmp_area_save_res(app, app.sub_T.lesion, app.sub_T.ss_LHM, app.sub_T.ss_RHM); 
-%                         
-%                         app.results{i} = app.sub_T; 
+                        non_lin_reg_info = non_linear_registration(app.sub_T.index, app.save_dir, app.paths{5});
+    
+                        % load registered image
+                        registered = niftiread(non_lin_reg_info.regi_output_path);
+                        
+                        zscore_out = compute_zscore(registered, app.reference, app.hemi_masks, app.sub_T.index, app.save_dir,...
+                            non_lin_reg_info.inv_info.out_path, app.affine_data_S2A, app.paths{5});
+                        
+                        app.sub_T.zscore = zscore_out.zscore;
+                        app.sub_T.ss_RHM = zscore_out.ss_RHM;
+                        app.sub_T.ss_LHM = zscore_out.ss_LHM;
+                        app.sub_T.registered = registered;
+                        
+                        imshow(app.sub_T.subject, 'Parent', app.ResAxes1);
+                        imshow(app.sub_T.zscore,[3 10], 'Parent',app.ResAxes2);
+                        colormap(app.ResAxes2, jet); 
+                        
+                        % create hemisphere difference features
+                        hem_diff_features = create_hem_diff_feat(app.reference, app.sub_T.index, zscore_out, app.hemi_tr, app.affine_data_S2A, ...
+                            non_lin_reg_info, app.save_dir, app.paths{4}, app.paths{5}, 'create_color_features', app.sub_T.subject);
+                        
+                        % create feature vector for both 13 and 19 features 
+                        % decide hemisphere mask 
+                        if zscore_out.hemi_flag == 1
+                            hemi_mask = zscore_out.ss_RHM;
+                        else
+                            hemi_mask = zscore_out.ss_LHM;
+                        end
+                        
+                        % feature extraction
+                        f_v_19 = create_ml_features(hemi_mask, 'subject', app.sub_T.subject, 'zscore',...
+                            zscore_out.ss_zscore, 'zscore_dif', hem_diff_features.zsc_dif_ss, ...
+                            'color_features', hem_diff_features.color_features);
+                        
+                        % random forest lesion prediction
+                        app.sub_T.lesion = ml_prediction(app.model, f_v_19, app.sub_T.subject);
+                        
+                        imwrite(app.sub_T.lesion, strcat(app.save_dir,'/',app.sub_T.index, '_pre.jpg'))
+    
+                        % save data to visualization folder 
+                        mkdir(app.save_dir, strcat('vis_',app.sub_T.index));
+                        new_save_dir = fullfile(app.save_dir, strcat('vis_',app.sub_T.index));
+    
+                        compute_volumetric_data(app.sub_T.lesion, zscore_out.ss_LHM, zscore_out.ss_RHM, app.sub_T.index, new_save_dir)
+    
+                        % transform ml_p to atlas space for region naming 
+                        ml_p_atlas_s = transform_to_as(app.sub_T.lesion, 'ml_prediction_as', ...
+                            app.affine_data_S2A, non_lin_reg_info.regi_output_path_dfield, ...
+                            app.save_dir, app.paths{5});
+                                        
+                        if isempty(app.dictionary)
+                            fname = strcat(app.paths{4}, '/acronyms.json');
+                            fid = fopen(fname);
+                            raw = fread(fid,inf);
+                            str = char(raw');
+                            app.dictionary = jsondecode(str);
+                        end
+                        
+                        region_naming(app.dictionary, app.allen_masks, app.sub_T.index, ml_p_atlas_s.def_transformed_img, new_save_dir);
+                        
+                        imwrite(uint8(registered), strcat(new_save_dir, "/", num2str(app.sub_T.index), "_registered.jpg"));
+                        imwrite(uint8(app.reference.Img), strcat(new_save_dir, "/", num2str(app.sub_T.index), "_reference.jpg"));
+                        
+                        % create lesion overlays
+                        les = blend_img(app, app.sub_T.subject, app.sub_T.lesion, 60);
+                        imwrite(les, strcat(new_save_dir, "/", num2str(app.sub_T.index), ".jpg"));
+                        
+                        left_hemi = blend_img(app, app.sub_T.subject, zscore_out.ss_LHM, 60);
+                        imwrite(left_hemi, strcat(new_save_dir, "/left_", num2str(app.sub_T.index), ".jpg"));
+                        
+                        right_hem = blend_img(app, app.sub_T.subject, zscore_out.ss_RHM, 60);
+                        imwrite(right_hem, strcat(new_save_dir, "/right_", num2str(app.sub_T.index), ".jpg"));
+                        
+                        app.results{i} = app.sub_T; 
                     end
                 end
             end
