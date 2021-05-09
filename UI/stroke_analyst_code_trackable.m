@@ -1450,20 +1450,9 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
                     right_hem = blend_img(app, app.sub_T.subject, zscore_out.ss_RHM, 60);
                     imwrite(right_hem, strcat(new_save_dir, "/right_", num2str(app.sub_T.index), ".jpg"));
                     
-%                     my_log(app, 'TEST--NON Linear Block');
-%                     non_linear_registration(app);
-%                     
-%                     cmp_zscore(app);
-%                     
-%                     imshow(app.sub_T.subject, 'Parent', app.ResAxes1);
-%                     imshow(app.sub_T.zscore,[3 10], 'Parent',app.ResAxes2);
-%                     colormap(app.ResAxes2, jet); 
-%                     
-%                     app.sub_T.lesion = ml_lesion_pred(app);
-% %                     create_nifti({app.sub_T.lesion}, app.save_dir, 'lesion_pred_ML', [0.021 0.021 0 1]);
-%                     nifti_save(app,app.sub_T.lesion, 'lesion_pred_ML', app.save_dir);
-%                         
-%                     cmp_area_save_res(app, app.sub_T.lesion, app.sub_T.ss_LHM, app.sub_T.ss_RHM); 
+                    subject_info = app.sub_T;
+                    save(strcat(app.save_dir,'/all'), 'subject_info');
+                    clear('subject_info');
                 else
                     app.RIndexiesListBox.Items = app.img_names;
                     
@@ -1558,6 +1547,10 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
                         imwrite(right_hem, strcat(new_save_dir, "/right_", num2str(app.sub_T.index), ".jpg"));
                         
                         app.results{i} = app.sub_T; 
+                        
+                        subject_info = app.sub_T;
+                        save(strcat(app.save_dir,'/all'), 'subject_info');
+                        clear('subject_info');
                     end
                 end
             end
