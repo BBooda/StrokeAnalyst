@@ -299,7 +299,7 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
             app.affine_data_S2A = create_affine_data(aff_out, subject, reference,... 
             app.sub_T.index, app.save_dir, movingRefObj, fixedRefObj);
 
-            cd(app.save_dir);
+%             cd(app.save_dir);
          end
     
         
@@ -903,79 +903,79 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
         end
         
         % affected region identification
-        function region_naming(app)
-            % load labels, if not loaded 
-            if isempty(app.dictionary)
-                fname = strcat(app.paths{4}, '/acronyms.json');
-                fid = fopen(fname);
-                raw = fread(fid,inf);
-                str = char(raw');
-                app.dictionary = jsondecode(str);
-            end
-            % if not loaded, load allen masks
-            if isempty(app.allen_masks)
-                app.allen_masks = load(strcat(app.paths{4}, '/allen_masks.mat'));
-                app.allen_masks = app.allen_masks.allen_masks;
-            end
-            % transform mask to subject space
-            
-            % perform linear transformation 
-            lp_linear = imwarp(app.sub_T.lesion, app.sub_T.movingRefObj, app.sub_T.aff_out.Transformation, 'OutputView', app.sub_T.fixedRefObj, 'SmoothEdges', true);
-            
-            % perform non linear registration 
-%             create_nifti({lp_linear}, app.save_dir, 'lp_lin', [0.021 0.021 0 1]);
-            nifti_save(app, lp_linear, 'lp_lin', app.save_dir);
-            
-            lp_lin_path = strcat(app.save_dir, '/lp_lin');
-            
-            dfield_path = strcat(app.save_dir, '/dfield'); 
-            
-            dramms_warp_ui(lp_lin_path,dfield_path, app.save_dir, 'lesion_pred_atlas_space', app.paths{5});
-            
-            % read from file 
-            
-            lp_AS = niftiread(strcat(app.save_dir, '/lesion_pred_atlas_space.nii'));            
-            
-            % filter allen mask using lesion prediction\
-            
-            % load corresponding mask 
-            [~, index] = find_reference_img(app, app.IndexiesListBox.Value);
-            
-            %extract original allen mask and keep unique
-            ori_allen_labels = unique(extract_allen_mask_v1(calculate_atlas_index(index)));
-            
-            
-            
-            % that mask exists
-            if app.allen_masks.isKey(index)
-                label_mask = app.allen_masks(index);
-                
-                if isequal(size(label_mask), size(lp_AS))
-                    affected_regions_mask = label_mask .* lp_AS;
-            
-                    % aquire interpolated points indexies
-                    int_indexies = ismember(affected_regions_mask, ori_allen_labels);      
-                    
-                    % filter out interpolated points, set to zero
-                    
-                    affected_regions_mask(~int_indexies) = 0;
-                    
-                    % filter duplicates and find affected regions 
-                    
-                    labels = unique(fix(affected_regions_mask(:)));
-        
-                    hit_regions = cell(numel(labels),1);
-                    for i = 1:numel(labels)
-                        hit_regions{i} = app.js_find(app.dictionary.msg, labels(i));
-                    end
-                    
-                    filePh = fopen(strcat(app.save_dir,'/affected_regions.txt'),'w');
-                    fprintf(filePh,'%s\n',hit_regions{:});
-                    fclose(filePh);
-                end
-            end
-            
-        end
+%         function region_naming(app)
+%             % load labels, if not loaded 
+%             if isempty(app.dictionary)
+%                 fname = strcat(app.paths{4}, '/acronyms.json');
+%                 fid = fopen(fname);
+%                 raw = fread(fid,inf);
+%                 str = char(raw');
+%                 app.dictionary = jsondecode(str);
+%             end
+%             % if not loaded, load allen masks
+%             if isempty(app.allen_masks)
+%                 app.allen_masks = load(strcat(app.paths{4}, '/allen_masks.mat'));
+%                 app.allen_masks = app.allen_masks.allen_masks;
+%             end
+%             % transform mask to subject space
+%             
+%             % perform linear transformation 
+%             lp_linear = imwarp(app.sub_T.lesion, app.sub_T.movingRefObj, app.sub_T.aff_out.Transformation, 'OutputView', app.sub_T.fixedRefObj, 'SmoothEdges', true);
+%             
+%             % perform non linear registration 
+% %             create_nifti({lp_linear}, app.save_dir, 'lp_lin', [0.021 0.021 0 1]);
+%             nifti_save(app, lp_linear, 'lp_lin', app.save_dir);
+%             
+%             lp_lin_path = strcat(app.save_dir, '/lp_lin');
+%             
+%             dfield_path = strcat(app.save_dir, '/dfield'); 
+%             
+%             dramms_warp_ui(lp_lin_path,dfield_path, app.save_dir, 'lesion_pred_atlas_space', app.paths{5});
+%             
+%             % read from file 
+%             
+%             lp_AS = niftiread(strcat(app.save_dir, '/lesion_pred_atlas_space.nii'));            
+%             
+%             % filter allen mask using lesion prediction\
+%             
+%             % load corresponding mask 
+%             [~, index] = find_reference_img(app, app.IndexiesListBox.Value);
+%             
+%             %extract original allen mask and keep unique
+%             ori_allen_labels = unique(extract_allen_mask_v1(calculate_atlas_index(index)));
+%             
+%             
+%             
+%             % that mask exists
+%             if app.allen_masks.isKey(index)
+%                 label_mask = app.allen_masks(index);
+%                 
+%                 if isequal(size(label_mask), size(lp_AS))
+%                     affected_regions_mask = label_mask .* lp_AS;
+%             
+%                     % aquire interpolated points indexies
+%                     int_indexies = ismember(affected_regions_mask, ori_allen_labels);      
+%                     
+%                     % filter out interpolated points, set to zero
+%                     
+%                     affected_regions_mask(~int_indexies) = 0;
+%                     
+%                     % filter duplicates and find affected regions 
+%                     
+%                     labels = unique(fix(affected_regions_mask(:)));
+%         
+%                     hit_regions = cell(numel(labels),1);
+%                     for i = 1:numel(labels)
+%                         hit_regions{i} = app.js_find(app.dictionary.msg, labels(i));
+%                     end
+%                     
+%                     filePh = fopen(strcat(app.save_dir,'/affected_regions.txt'),'w');
+%                     fprintf(filePh,'%s\n',hit_regions{:});
+%                     fclose(filePh);
+%                 end
+%             end
+%             
+%         end
         
         function ot = js_find(app,mat, val)
             % ot = js_find(mat, val), mat is the json struct and val is the id
@@ -1158,6 +1158,9 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
                 app.hemi_masks = app.hemi_masks.hemi_m;
                 
                 app.hemi_tr = load(strcat(app.paths{4}, '/hemisphere_transformations','/hemisphere_transformations.mat'));
+                
+                app.allen_masks = load(strcat(app.paths{4}, '/allen_masks.mat'));
+                app.allen_masks = app.allen_masks.allen_masks; 
             else 
                 app.hemi_masks = [];
                 app.LogTextArea.Value = [app.LogTextArea.Value; "Hemisphere masks not found, please set dependencies path first."];
@@ -1403,12 +1406,49 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
                         hemi_mask = zscore_out.ss_LHM;
                     end
                     
+                    % feature extraction
                     f_v_19 = create_ml_features(hemi_mask, 'subject', app.sub_T.subject, 'zscore',...
                         zscore_out.ss_zscore, 'zscore_dif', hem_diff_features.zsc_dif_ss, ...
                         'color_features', hem_diff_features.color_features);
                     
+                    % random forest lesion prediction
                     app.sub_T.lesion = ml_prediction(app.model, f_v_19, app.sub_T.subject);
                     
+                    imwrite(app.sub_T.lesion, strcat(app.save_dir,'/',app.sub_T.index, '_pre.jpg'))
+
+                    % save data to visualization folder 
+                    mkdir(app.save_dir, strcat('vis_',app.sub_T.index));
+                    new_save_dir = fullfile(app.save_dir, strcat('vis_',app.sub_T.index));
+
+                    compute_volumetric_data(app.sub_T.lesion, zscore_out.ss_LHM, zscore_out.ss_RHM, app.sub_T.index, new_save_dir)
+
+                    % transform ml_p to atlas space for region naming 
+                    ml_p_atlas_s = transform_to_as(app.sub_T.lesion, 'ml_prediction_as', ...
+                        app.affine_data_S2A, non_lin_reg_info.regi_output_path_dfield, ...
+                        app.save_dir, app.paths{5});
+                                    
+                    if isempty(app.dictionary)
+                        fname = strcat(app.paths{4}, '/acronyms.json');
+                        fid = fopen(fname);
+                        raw = fread(fid,inf);
+                        str = char(raw');
+                        app.dictionary = jsondecode(str);
+                    end
+                    
+                    region_naming(app.dictionary, app.allen_masks, app.sub_T.index, ml_p_atlas_s.def_transformed_img, new_save_dir);
+                    
+                    imwrite(uint8(registered), strcat(new_save_dir, "/", num2str(app.sub_T.index), "_registered.jpg"));
+                    imwrite(uint8(app.reference.Img), strcat(new_save_dir, "/", num2str(app.sub_T.index), "_reference.jpg"));
+                    
+                    % create lesion overlays
+                    les = blend_img(app, app.sub_T.subject, app.sub_T.lesion, 60);
+                    imwrite(les, strcat(new_save_dir, "/", num2str(app.sub_T.index), ".jpg"));
+                    
+                    left_hemi = blend_img(app, app.sub_T.subject, zscore_out.ss_LHM, 60);
+                    imwrite(left_hemi, strcat(new_save_dir, "/left_", num2str(app.sub_T.index), ".jpg"));
+                    
+                    right_hem = blend_img(app, app.sub_T.subject, zscore_out.ss_RHM, 60);
+                    imwrite(right_hem, strcat(new_save_dir, "/right_", num2str(app.sub_T.index), ".jpg"));
                     
 %                     my_log(app, 'TEST--NON Linear Block');
 %                     non_linear_registration(app);
@@ -1464,7 +1504,7 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
             end
             
             % return to original directory.
-            cd(original_dir);
+%             cd(original_dir);
         end
 
         % Button pushed function: ChoosedirectoryButton
@@ -1556,6 +1596,8 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
                 imshow( uint8(app.sub_T.subject), 'Parent', app.ResAxes2)
             elseif strcmp(value, 'lesion_overlay')
                 imshow( blend_img(app,app.sub_T.subject, app.sub_T.lesion, 60), 'Parent', app.ResAxes2)
+            elseif strcmp(value, 'lesion')
+                imshow(app.sub_T.lesion, 'Parent', app.ResAxes2)
             elseif strcmp(value, 'registered')
                 imshow( uint8(app.sub_T.registered), 'Parent', app.ResAxes2)
             end
