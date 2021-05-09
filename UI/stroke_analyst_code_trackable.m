@@ -110,6 +110,7 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
         model_names % model names. used to choose between models.
         hemi_masks % hemisphere masks dictionary
         affine_data_S2A % create linear transformation output struct 
+        hemi_tr % hemisphere transformations for hemisphere differencies features
     end
     
     methods (Access = private)
@@ -1155,6 +1156,8 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
                 %FIX hard coded path value
                 app.hemi_masks = load(strcat(app.paths{4}, '/hemisphere_masks.mat'));
                 app.hemi_masks = app.hemi_masks.hemi_m;
+                
+                app.hemi_tr = load(strcat(app.paths{4}, '/hemisphere_transformations','/hemisphere_transformations.mat'));
             else 
                 app.hemi_masks = [];
                 app.LogTextArea.Value = [app.LogTextArea.Value; "Hemisphere masks not found, please set dependencies path first."];
@@ -1347,8 +1350,8 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
             % set original directory to return.
             original_dir = pwd;
             
-            % temporary 
-            app.model = true;
+%             % temporary 
+%             app.model = true;
             
             if isempty(app.model)
                app.LogTextArea.Value = [app.LogTextArea.Value; "Model isnt loaded! Please load the model."; "Go to Settings -> load model."]; 
@@ -1380,10 +1383,33 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
                         non_lin_reg_info.inv_info.out_path, app.affine_data_S2A, app.paths{5});
                     
                     app.sub_T.zscore = zscore_out.zscore;
+                    app.sub_T.ss_RHM = zscore_out.ss_RHM;
+                    app.sub_T.ss_LHM = zscore_out.ss_LHM;
+                    app.sub_T.registered = registered;
                     
                     imshow(app.sub_T.subject, 'Parent', app.ResAxes1);
                     imshow(app.sub_T.zscore,[3 10], 'Parent',app.ResAxes2);
                     colormap(app.ResAxes2, jet); 
+                    
+                    % create hemisphere difference features
+                    hem_diff_features = create_hem_diff_feat(app.reference, app.sub_T.index, zscore_out, app.hemi_tr, app.affine_data_S2A, ...
+                        non_lin_reg_info, app.save_dir, app.paths{4}, app.paths{5}, 'create_color_features', app.sub_T.subject);
+                    
+                    % create feature vector for both 13 and 19 features 
+                    % decide hemisphere mask 
+                    if zscore_out.hemi_flag == 1
+                        hemi_mask = zscore_out.ss_RHM;
+                    else
+                        hemi_mask = zscore_out.ss_LHM;
+                    end
+                    
+                    f_v_19 = create_ml_features(hemi_mask, 'subject', app.sub_T.subject, 'zscore',...
+                        zscore_out.ss_zscore, 'zscore_dif', hem_diff_features.zsc_dif_ss, ...
+                        'color_features', hem_diff_features.color_features);
+                    
+                    app.sub_T.lesion = ml_prediction(app.model, f_v_19, app.sub_T.subject);
+                    
+                    
 %                     my_log(app, 'TEST--NON Linear Block');
 %                     non_linear_registration(app);
 %                     
@@ -1462,23 +1488,27 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
 %                 L = load('/home/makis/Documents/MouseStrokeImageAnalysis/Data/trainingData/strokes_4_10_20/mdl_16.mat');
                 L = load(app.model_path);
                 % get model from struct, assume matlab file with one variable
-                names = fieldnames(L);
-                app.model_names = names;
-                % display if .mat model file contains more than one variable
-                if numel(names) ~= 1
-                    app.LogTextArea.Value = [app.LogTextArea.Value; "Matlab file **.m contains more than one variable!"; "Please input a model in a .mat file containg only the model variable."];
-                else
-                    if strcmp(app.model_names{1}, 'mdl_16')
-                        app.model = L.mdl_16;
-                    elseif strcmp(app.model_names{1}, 'mdl_31')
-                        app.model = L.mdl_31;
-                    elseif strcmp(app.model_names{1}, 'mdl_11_3')
-                        app.model = L.mdl_11_3;
-                    end
-%                     app.model = getfield(L, names{1});
-%                     app.model = L.mdl_11_3;
-                    app.LogTextArea.Value = [app.LogTextArea.Value; "Model loaded!"];
+%                 names = fieldnames(L);
+                try
+                    app.model = L.model;
+                catch exception
+                    app.LogTextArea.Value = [app.LogTextArea.Value; getReport(exception)];
                 end
+                % display if .mat model file contains more than one variable
+%                 if numel(names) ~= 1
+%                     app.LogTextArea.Value = [app.LogTextArea.Value; "Matlab file **.m contains more than one variable!"; "Please input a model in a .mat file containg only the model variable."];
+%                 else
+%                     if strcmp(app.model_names{1}, 'mdl_16')
+%                         app.model = L.mdl_16;
+%                     elseif strcmp(app.model_names{1}, 'mdl_31')
+%                         app.model = L.mdl_31;
+%                     elseif strcmp(app.model_names{1}, 'mdl_11_3')
+%                         app.model = L.mdl_11_3;
+%                     end
+% %                     app.model = getfield(L, names{1});
+% %                     app.model = L.mdl_11_3;
+%                     app.LogTextArea.Value = [app.LogTextArea.Value; "Model loaded!"];
+%                 end
                 
                 
            else
@@ -1502,6 +1532,8 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
                 imshow( app.sub_T.subject, 'Parent', app.ResAxes1)
             elseif strcmp(value, 'lesion_overlay')
                 imshow( blend_img(app,app.sub_T.subject, app.sub_T.lesion, 60), 'Parent', app.ResAxes1)
+            elseif strcmp(value, 'lesion')
+                imshow(app.sub_T.lesion, 'Parent', app.ResAxes1)
             elseif strcmp(value, 'registered')
                 imshow( uint8(app.sub_T.registered), 'Parent', app.ResAxes1)    
             end
