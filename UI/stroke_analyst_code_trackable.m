@@ -150,6 +150,7 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
                 
                 x = evnt.Position(1);
                 y = evnt.Position(2);
+%                 disp(strcat('(', num2str(x), ",", num2str(y), ')'))
                 
                 app.add_mask = (app.add_mask + pixel_brush(cols, rows, app.Radius.Value, [x, y])) ~= 0;
                 
@@ -301,707 +302,6 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
 
 %             cd(app.save_dir);
          end
-    
-        
-        %8TH FUNCTION
-        function non_linear_registration_ui(app)
-            %determine reference image (atlas image) path.
-            ref_path = strcat(app.save_dir, '/reference.nii');
-            
-            % determine path for linearly transformed image
-            sub_aff_path = strcat(app.save_dir, '/aff_sub_to_average.nii');
-            
-            % non linearly registered subject path
-            regi_sub_path = app.save_dir;
-            
-            %call dramms, perform non linear registration
-            dramms_2dregistration_ui(app,ref_path,sub_aff_path,regi_sub_path, app.IndexiesListBox.Value);
-            
-            % inverse deformation field
-            %deternine deformation field path 
-            dfield_path = strcat(app.save_dir, '/dfield');
-            dramms_inverse_dfield_ui(dfield_path, app.save_dir, app.paths{5});
-            
-        end
-        
-        %9TH FUNCTION
-        % computes zscore and lesion hemisphere
-        function cmp_zscore(app)
-            % determine th path of registered subject
-            subj_reg_path = strcat(app.save_dir, '/registered_', app.IndexiesListBox.Value, '_to_average.nii');
-            
-            % load registerd subject
-             subject_registered = uint8(niftiread(subj_reg_path));
-             app.sub_T.registered = subject_registered;
-             
-            % set original threshold for zscore calculation
-            threshold = 3;
-            
-            % determine hemispheres
-            mid_th = compute_midline_threshold(app.reference.Img);
-            
-            % cmp zscore image
-            zscore = double(double(subject_registered)-app.reference.Img)./app.reference.STD;
-            
-            % save zscore 
-            app.sub_T.zscore = zscore;
-            
-            % apply threshold and compute mask indicating points with a value > 3 STD
-            abn_img = zscore > threshold;
-            
-            % compute hemisphere masks. Currently using two techniques (this is just temporary).
-            [~, index] = find_reference_img(app, app.IndexiesListBox.Value);
-            if app.hemi_masks.isKey(index)
-                % 8 January hemisphere changes.
-                right_hem_mask = app.hemi_masks(index).Right;
-                left_hem_mask = app.hemi_masks(index).Left;
-                
-                %determine ubnormal hemisphere
-                abn_right = right_hem_mask.* abn_img;
-                abn_left = left_hem_mask.* abn_img;
-                if (sum(abn_right(:) > 0) > sum(abn_left(:) > 0))
-                    app.hemi_flag = 1;
-                else
-                    app.hemi_flag = 0;
-                end
-            else
-                % determine lesion hemisphere, i.e. compare number of abnormality points
-                [y, x] = find(abn_img);
-                 x1 = [];x2 = [];
-                 y1 = [];y2 = [];
-                
-                 % keep points only in wanted hemisphere
-                 for i = 1:length(y)
-                    if x(i) < mid_th
-                        x1 = [x1, x(i)];
-                        y1 = [y1, y(i)];
-                    else
-                        x2 = [x2, x(i)];
-                        y2 = [y2, y(i)];
-                    end
-                 end
-                 
-                 app.hemi_flag = 0; % if hemi flag = 0, lesion hemisphere is left, else for hemi_flag = 1, lesion hemisphere = right
-                 
-                 %check wich hemisphere presents bigger abnormality(area wise)
-                 if length(x2) > length(x1)
-                    x1 = x2;
-                    y1 = y2;
-                    app.hemi_flag = 1;
-                 end
-                 
-                 abn_img = zeros(size(zscore));
-                 for i = 1:length(y1)
-                    abn_img(y1(i), x1(i)) = 1;
-                 end
-                 
-                 %compute masks for right and left hemisphere
-                 [suby, subx] = find(subject_registered(:,:) ~= 0);
-                 right_hem_mask = zeros(size(subject_registered));
-                 left_hem_mask = zeros(size(subject_registered));
-                 for i = 1:length(subx)
-                    if subx(i) >= mid_th
-                        right_hem_mask(suby(i), subx(i)) = 1;
-                    else
-                        left_hem_mask(suby(i), subx(i)) = 1;
-                    end
-                 end
-            end
-            
-             
-             %pass to struct for later use
-             app.sub_T.right_hem_mask = right_hem_mask;
-             app.sub_T.left_hem_mask = left_hem_mask;
-             
-             % compute hemisphere masks at subject space 
-%              create_nifti({right_hem_mask}, app.save_dir, 'right_hem_mask_atlas_space', [0.021 0.021 0 1]);
-%              create_nifti({left_hem_mask}, app.save_dir, 'left_hem_mask_atlas_space', [0.021 0.021 0 1]);
-             nifti_save(app, right_hem_mask, 'right_hem_mask_atlas_space', app.save_dir);
-             nifti_save(app, left_hem_mask, 'left_hem_mask_atlas_space', app.save_dir);
-             
-             % set paths for dramms, apply inv deformation field.
-             r_h_mask_path = strcat(app.save_dir, '/right_hem_mask_atlas_space');
-             l_h_mask_path = strcat(app.save_dir, '/left_hem_mask_atlas_space');
-             inv_dfield_path = strcat(app.save_dir, '/inv_dfield');
-             % inverse non linear transformation on hemisphere masks
-             dramms_warp_ui(r_h_mask_path,inv_dfield_path, app.save_dir, 'right_h_mask_inversedDf', app.paths{5});
-             dramms_warp_ui(l_h_mask_path,inv_dfield_path, app.save_dir, 'left_h_mask_inversedDf', app.paths{5});
-             
-             %inverse linear transformation on hemi masks
-             inv_rhem_mask = 255*uint8(niftiread(strcat(app.save_dir, '/right_h_mask_inversedDf.nii')));
-             inv_lhem_mask = 255*uint8(niftiread(strcat(app.save_dir, '/left_h_mask_inversedDf.nii')));
-             
-             subject_space_rhem_mask = imwarp(imbinarize(inv_rhem_mask), app.sub_T.fixedRefObj, app.sub_T.inv_aff, ...
-                 'OutputView', app.sub_T.movingRefObj, 'SmoothEdges', true);
-
-             subject_space_lhem_mask = imwarp(imbinarize(inv_lhem_mask), app.sub_T.fixedRefObj, app.sub_T.inv_aff, ... 
-                 'OutputView', app.sub_T.movingRefObj, 'SmoothEdges', true);
-             
-             app.sub_T.ss_RHM = subject_space_rhem_mask;
-             app.sub_T.ss_LHM = subject_space_lhem_mask;
-        end
-        
-        %10TH FUNCTION
-        function ml_pre = ml_lesion_pred(app)
-            
-%             L = load('/home/makis/Documents/MouseStrokeImageAnalysis/Data/subjects_results/hemisphere_transformations.mat', 'hemi_transf','hemi_transf_l', 'hemi_transf_r');
-            L = load(strcat(app.paths{4},'/hemisphere_transformations/hemisphere_transformations.mat'), 'hemi_transf','hemi_transf_l', 'hemi_transf_r');
-            % get hemisphere transformations
-            % one object for slices transformed from left to right and one object for right to left ??
-            app.hemi_T.hemi_transf = L.hemi_transf;
-            app.hemi_T.hemi_transf_l = L.hemi_transf_l;
-            app.hemi_T.hemi_transf_r = L.hemi_transf_r;
-            
-            
-            name = app.IndexiesListBox.Value;
-            
-            %determine hemi_flag value, keep everything left
-            if app.hemi_flag == 1 % hemi_flag == 1 => lesion right
-                hem_mask = app.sub_T.right_hem_mask;
-                ss_hem_mask = app.sub_T.ss_RHM;
-            else
-                hem_mask = app.sub_T.left_hem_mask;
-                ss_hem_mask = app.sub_T.ss_LHM;
-            end
-            
-            zscore = app.sub_T.zscore;
-            % get rid of infinity and nan values.
-            zscore(isnan(zscore(:))) = 0;
-            zscore(isinf(zscore(:))) = 20;
-            
-            
-            
-            if app.hemi_flag == 1
-                % if lesion hemisphere is right, obtain transformations and continue, else compute transformations for this index
-                
-                if app.hemi_T.hemi_transf_r.isKey(name)
-                    fixedRefObj_T1 = app.hemi_T.hemi_transf_r(name).fixed;
-                    movingRefObj_T1 = app.hemi_T.hemi_transf_r(name).mov;
-                    aff_ref_flip = app.hemi_T.hemi_transf_r(name).T ;
-%                     hemi_flag = app.hemi_T.hemi_transf_r(name).hemi_flag;
-                %     dfield_path = strcat('/home/makis/Documents/MouseStrokeImageAnalysis/Data/subjects_results/hemisphere_transformations/', name);
-        
-                else
-                    %compute transformations for this index.
-                    
-                    % find zscore hemisphere difference feature
-                    % check registration between hemispheres 
-                    ref_flip = flip(app.reference.Img, 2);
-        
-                    % linearly register hemispheres
-                    [aff_ref_flip, ~,movingRefObj_T1,fixedRefObj_T1] = multimodal_affine_reg((ref_flip),app.reference.Img);
-        %              affine_matrix_o = aff_out.Transformation;
-        
-%                      save('f_zscore_to_ref_aff', 'aff_ref_flip', 'movingRefObj_T1', 'fixedRefObj_T1');
-        
-                     %deformally register hemispheres
-%                      create_nifti({aff_ref_flip.RegisteredImage}, app.save_dir, 'aff_ref_flip', [0.021 0.021 0 1]);
-                     nifti_save(app, aff_ref_flip.RegisteredImage, 'aff_ref_flip', app.save_dir);
-        
-                     % set paths for dformable registration
-%                      aff_path = load_file_names('aff_ref_flip', 'nii');
-%                      aff_path = strcat(pwd, '/',aff_path{1},'.nii' );
-%                      out_path = pwd;
-                     aff_path = strcat(app.save_dir, '/aff_ref_flip.nii');
-                     out_path = app.save_dir;
-                     ref_path = strcat(app.save_dir, '/reference.nii');
-        
-                     % update .mat file 
-                     % load files and update 
-                     hemi_transf_r = L.hemi_transf_r;
-                     hemi_transf = L.hemi_transf;
-                     hemi_transf_l = L.hemi_transf_l;
-                     
-                     %save hemisphere transformation
-                     %create transf object
-                     transf.fixed = fixedRefObj_T1;
-                     transf.mov = movingRefObj_T1;
-                     transf.T = aff_ref_flip;
-                     transf.hemi_flag = app.hemi_flag;
-                    
-                     %create and save to struct
-                     hemi_transf_r(name) = transf;                   
-                     
-                     %save struct, save deformation field.
-%                      save('/home/makis/Documents/MouseStrokeImageAnalysis/Data/subjects_results/hemisphere_transformations', 'hemi_transf', 'hemi_transf_l', 'hemi_transf_r');
-                    save(strcat(app.paths{4},'/hemisphere_transformations/hemisphere_transformations'), 'hemi_transf', 'hemi_transf_l', 'hemi_transf_r');
-                     dfield_path = strcat(app.paths{4},'/hemisphere_transformations/r_hemisphere/', name);
-        
-        
-                     dramms_2dregistration_ui(app,ref_path,aff_path,out_path, name,dfield_path);
-        
-                end
-        
-            else
-                %else we are in a left hemisphere detection (left lesion hit).
-                % if transformation exists, assign values to use, else perform hemisphere transformation
-                if app.hemi_T.hemi_transf_l.isKey(name)
-                    fixedRefObj_T1 = app.hemi_T.hemi_transf_l(name).fixed;
-                    movingRefObj_T1 = app.hemi_T.hemi_transf_l(name).mov;
-                    aff_ref_flip = app.hemi_T.hemi_transf_l(name).T ;
-%                     app.hemi_flag = app.hemi_T.hemi_transf_l(name).hemi_flag;
-                %     dfield_path = strcat('/home/makis/Documents/MouseStrokeImageAnalysis/Data/subjects_results/hemisphere_transformations/', name);
-        
-                else
-                    % find zscore hemisphere difference feature
-                    % check registration between hemispheres 
-                    ref_flip = flip(app.reference.Img, 2);
-        
-                    % linearly register hemispheres
-                    [aff_ref_flip, ~,movingRefObj_T1,fixedRefObj_T1] = multimodal_affine_reg((ref_flip),app.reference.Img);
-        %              affine_matrix_o = aff_out.Transformation;
-%                      save('f_zscore_to_ref_aff', 'aff_ref_flip', 'movingRefObj_T1', 'fixedRefObj_T1');
-        
-                     %deformably register hemispheres
-%                      create_nifti({aff_ref_flip.RegisteredImage}, app.save_dir, 'aff_ref_flip', [0.021 0.021 0 1]);
-                      nifti_save(app, aff_ref_flip.RegisteredImage, 'aff_ref_flip', app.save_dir);
-        
-                     % set paths for dformable registration
-%                      aff_path = load_file_names('aff_ref_flip', 'nii');
-%                      aff_path = strcat(pwd, '/',aff_path{1},'.nii' );
-%                      out_path = pwd;
-                     aff_path = strcat(app.save_dir, '/aff_ref_flip.nii');
-                     out_path = app.save_dir;
-                     ref_path = strcat(app.save_dir, '/reference.nii');
-                     
-                     % update .mat file 
-                     % load files and update 
-                     hemi_transf_r = L.hemi_transf_r;
-                     hemi_transf = L.hemi_transf;
-                     hemi_transf_l = L.hemi_transf_l;
-                     
-                     %save hemisphere transformation
-                     transf.fixed = fixedRefObj_T1;
-                     transf.mov = movingRefObj_T1;
-                     transf.T = aff_ref_flip;
-                     transf.hemi_flag = app.hemi_flag;
-                     
-                     % save struct..
-                     hemi_transf_l(name) = transf;
-                     save(strcat(app.paths{4},'/hemisphere_transformations/hemisphere_transformations'), 'hemi_transf', 'hemi_transf_l', 'hemi_transf_r');
-                     dfield_path = strcat(app.paths{4},'/hemisphere_transformations/l_hemisphere/', name);
-        
-        
-                     dramms_2dregistration_ui(app,ref_path,aff_path,out_path, name,dfield_path);
-        
-                end
-            end
-            
-            
-            % use transformations, compute features, predict lesion.
-            % use hemi flag and determine deformation field path
-            
-            if app.hemi_flag == 1
-                dfield_path = strcat(app.paths{4},'/hemisphere_transformations/r_hemisphere/', name, 'dfield');
-        
-            else
-                dfield_path = strcat(app.paths{4},'/hemisphere_transformations/l_hemisphere/', name, 'dfield');
-        
-            end
-            
-            % zscore flip 
-%             zsc_flip = app.zscore;
-            zsc_flip = flip(zscore, 2);
-            % linearly register fliped zscore, use T1
-            zsc_aff = imwarp(zsc_flip, movingRefObj_T1, aff_ref_flip.Transformation, 'OutputView', fixedRefObj_T1, 'SmoothEdges', true);
-%             create_nifti({zsc_aff}, pwd, 'zsc_aff', [0.021 0.021 0 1]);
-            nifti_save(app, zsc_aff, 'zsc_aff', pwd);
-        
-%             ssf_zsc_path = load_file_names('zsc_aff', 'nii');
-%             ssf_zsc_path = ssf_zsc_path{1};
-%             ssf_zsc_path = strcat(pwd,'/', ssf_zsc_path);
-            ssf_zsc_path = strcat(app.save_dir, '/zsc_aff');
-            
-            % deformally register zsc_aff, use T2
-
-
-            dramms_warp_ui(ssf_zsc_path,dfield_path, app.save_dir, 'ssf_zscore', app.paths{5});    
-            
-            % load ss_zscore (ssf := subject space flip)
-            ssf_zscore = niftiread(strcat(app.save_dir,'/ssf_zscore.nii'));
-            
-            
-            % compute hemisphere difference
-            zsc_dif = abs(zscore - ssf_zscore);
-            
-            % keep left hemisphere (use as feature)
-            zsc_dif = zsc_dif .* hem_mask;
-            
-            % keep left hemisphere feauture one
-
-            zsc_dif = zsc_dif .* hem_mask;
-            
-            % go back to subject space
-            %inverse deformation field
-            
-            %load inversed dfield ( subject image to reference tranform )
-%             inv_dfield_path = load_file_names('inv', 'nii.gz');
-%             inv_dfield_path = inv_dfield_path{1};
-%             inv_dfield_path = strcat(pwd,'/', inv_dfield_path);
-            
-            inv_dfield_path = strcat(app.save_dir, '/inv_dfield');
-            
-        
-            %apply transformation to zscore diference, bring to native space (zscore dif feature).
-        
-            % create .nifti for dramms
-%             create_nifti({zsc_dif}, pwd, 'zsc_dif', [0.021 0.021 0 1]);
-            nifti_save(app, zsc_dif, 'zsc_dif', pwd);
-        
-            % load .nifti image path
-%             z_path = load_file_names('zsc_dif', 'nii');
-%             z_path = z_path{1};
-%             z_path = strcat(pwd, '/',z_path);
-            z_path = strcat(app.save_dir, '/zsc_dif');
-        
-           
-            % apply inversed dfield, save as ss_zscore (subject space zscore)
-            dramms_warp_ui(z_path,inv_dfield_path, app.save_dir, 'zsc_dif', app.paths{5});
-        
-            % load and apply inversed linear tranform to native space
-            % compute inverse linear transformation. This linear transf is the one between subject and TTC atlas slice.
-            
-            
-            zsc_dif = imwarp(niftiread(strcat(app.save_dir, '/zsc_dif.nii')), app.sub_T.fixedRefObj, app.sub_T.inv_aff, ...
-            'OutputView', app.sub_T.movingRefObj, 'SmoothEdges', true);
-            
-            
-            % cmpt zscore feauture at subject space
-            %mask zscore
-            zscore = hem_mask .* zscore;
-        
-            %apply transformation to zscore, bring to native space, zscore feature
-        
-            % create .nifti for dramms
-%             create_nifti({zscore}, pwd, 'tr_zscore', [0.021 0.021 0 1]);
-            nifti_save(app, zscore, 'tr_zscore', pwd);
-        
-            % load .nifti image path
-%             z_path = load_file_names('tr_zscore', 'nii');
-%             z_path = z_path{1};
-%             z_path = strcat(pwd, '/',z_path);
-            z_path = strcat(app.save_dir, '/tr_zscore');
-        
-            % apply inversed dfield, save as ss_zscore (subject space zscore)
-            dramms_warp_ui(z_path,inv_dfield_path, app.save_dir, 'ss_zscore', app.paths{5});
-        
-            % load and apply inversed linear tranform to native space
-            ss_zscore = imwarp(niftiread(strcat(app.save_dir,'/ss_zscore.nii')), app.sub_T.fixedRefObj, app.sub_T.inv_aff, ...
-            'OutputView', app.sub_T.movingRefObj, 'SmoothEdges', true);
-        
-            sub_hem = bsxfun(@times, app.sub_T.subject, cast(ss_hem_mask,class(app.sub_T.subject)));
-            
-            % save all important information 
-            app.sub_T.ss_zscore = ss_zscore;
-            app.sub_T.zsc_dif = zsc_dif;
-            app.sub_T.hemi_flag = app.hemi_flag;
-            
-            %choose predictor function according to model loaded.
-            if strcmp(app.model_names{1}, 'mdl_16')
-                [out,scores] = rf_z_pred(sub_hem, ss_zscore, zsc_dif, app.model); % rgb + [3 3] median filtering, mdl_16
-            elseif strcmp(app.model_names{1}, 'mdl_31')
-                [out,scores] = rf_z_pred_v1(sub_hem, ss_zscore, zsc_dif, app.model); % rgb + [3 3] moving average filtering, mdl_31
-            elseif strcmp(app.model_names{1}, 'mdl_11_3')
-                [out,scores] = rf_z_pred_v2(sub_hem, ss_zscore, zsc_dif, app.model); % hsv + [3 3] moving average filtering, mdl_11_3
-            end
-            
-            app.sub_T.scores = scores;
-            
-            ml_pre = bwareafilt(imbinarize(out),4); 
-            
-            imshow(ml_pre, 'Parent', app.ResAxes2);
-            
-            
-        end
-    
-    
-    
-    
-        %11TH FUNCTION
-        function dramms_2dregistration_ui(app,target_path,moving_path,out_path, file_name, varargin)
-            %   dramms_2dregistration(target_path,moving_path,out_path)
-            %   +input => absolute file paths
-            %   -output => 2 files. Registered Image to target and deformation field.   
-            
-                
-            %     moving_path = strcat(moving_path, "/",file_name, ".nii");
-                target_path = convertCharsToStrings(target_path);
-                
-                moving_path = convertCharsToStrings(moving_path);
-            
-                out_path_dfield = convertCharsToStrings(strcat(out_path, '/dfield.nii.gz'));
-                
-                if ~isempty(varargin)
-                    out_path_dfield = convertCharsToStrings(strcat(varargin{1}, 'dfield.nii.gz'));
-                end
-                
-                out_path = convertCharsToStrings(strcat(out_path, "/registered_", file_name, "_to_average.nii"));
-                
-                
-                
-            
-            %     sett = " -w 1 -a 0 -v -v";
-            
-            
-            %  -c   <int>              How to use mutual-saliency weighting. 
-            %                         0 -- (default) do not use mutual-saliency if there are no outlier regions (lesions, cuts, etc);
-            %                        1 -- use but do not save mutual-saliency map; 
-            
-                
-                sett = " -w 1 -a 0 -c 1"; % < -c 1 > for lesions and cuts..
-            %     sett = " -w 1 -a 0";
-                ret_add = pwd;
-                %create cell with registered slices to reference
-                
-                % Change directory to dramms bin to run dramms algorithms.
-%                 cd('~/myprograms/dramms/bin/');
-                cd(app.paths{5});
-            
-                % log output
-                app.LogTextArea.Value = [app.LogTextArea.Value; "run Dramms registration..."];
-%                 my_log(app, 'TEST--DRAMMS REGI LIVE');
-                
-                command = strcat("./dramms", " -S ", moving_path, " -T ", target_path, " -O ", out_path, " -D ", out_path_dfield,sett);
-                [status, result] = system(command, '-echo');
-                if status ~= 0
-                    app.LogTextArea.Value = [app.LogTextArea.Value; result]; 
-                end
-                   
-                 cd(ret_add)
-                 
-                 
-                 app.LogTextArea.Value = [app.LogTextArea.Value; "Dramms registration finished!"];          
-                 
-            
-            end
-
-
-        %12TH FUNCTION
-        function cmp_area_save_res(app, lesion_m, left_hemi, right_hemi)
-            pix_area = 0.021*0.021;    
-            
-            [y, ~] = find(lesion_m);
-            lesion_area = length(y)*pix_area;
-            
-            [y, ~] = find(left_hemi);
-            lh_area = length(y)*pix_area;
-            
-            [y, ~] = find(right_hemi);
-            rh_area = length(y)*pix_area;
-            
-%             T = table('Size',[3 1], 'VariableTypes', {'double'});
-            Names = {cell2mat(app.img_names(strcmp(app.img_names, app.IndexiesListBox.Value))); 'lesion_area'; 'left_hem_area'; 'right_hem_area'};
-            
-%             VariableNames{end + 1} = {};
-                        
-            Variables = [NaN;lesion_area; lh_area; rh_area];
-            
-            T = table(Names,Variables); 
-            
-            writetable(T, strcat(app.save_dir, '/results.xls'));
-            
-            % affected region identification, save to file
-            
-            app.region_naming();
-            
-            if 1 
-                imwrite(app.sub_T.subject, strcat(app.save_dir, '/subject.jpg'));
-                imwrite(app.sub_T.lesion, strcat(app.save_dir, '/lesion_pred.jpg'));
-            end
-            
-            % save matlab file
-            subject_info = app.sub_T;
-            save(strcat(app.save_dir,'/all'), 'subject_info');
-            clear('subject_info');
-            
-        end
-        
-        %13TH FUNCTION
-        function area_identification(app, inv_dfield, lesion_mask)
-            % load mask
-            
-            mask = zeros(app.sub_T.reference.Img);
-            
-            % create nifti
-            
-%             create_nifti({mask}, app.save_dir, 'anatomical_mask', [0.021 0.021 0 1]);
-            nifti_save(app, mask, 'anatomical_mask', app.save_dir);
-            
-            mask_path = strcat(app.save_dir, '/anatomical_mask.nii');
-            
-            % transforms label masks to subject space. 
-            % use mask to filter out non affected anatomical areas. 
-            
-            % inverse deformable transformation
-            
-            dramms_warp_ui(mask_path, inv_dfield, app.save_dir, 'anat_mask_inv_def', app.paths{5});
-            
-            % inverse linear transformation
-                
-            ss_an_mask = imwarp(niftiread(strcat(app.save_dir,'/anat_mask_inv_def.nii')), app.sub_T.fixedRefObj, app.sub_T.inv_aff, ...
-            'OutputView', app.sub_T.movingRefObj, 'SmoothEdges', true);
-            
-            % apply mask
-            
-            affected_areas = lesion_mask.*ss_an_mask;
-            
-            % search in dictionary
-            
-            
-            
-            % save results
-            
-        end
-        
-        function [MOVINGREG, tform, movingRefObj,fixedRefObj] = linear_regi(app, MOVING,FIXED)
-            %registerImages  Register grayscale images using auto-generated code from Registration Estimator app.
-            %  [MOVINGREG] = registerImages(MOVING,FIXED) Register grayscale images
-            %  MOVING and FIXED using auto-generated code from the Registration
-            %  Estimator app. The values for all registration parameters were set
-            %  interactively in the app and result in the registered image stored in the
-            %  structure array MOVINGREG.
-            
-            % Auto-generated by registrationEstimator app on 28-Dec-2019
-            %-----------------------------------------------------------
-            
-            
-            % Default spatial referencing objects
-            fixedRefObj = imref2d(size(FIXED));
-            movingRefObj = imref2d(size(MOVING));
-            
-            % Intensity-based registration
-            [optimizer, metric] = imregconfig('multimodal');
-            metric.NumberOfSpatialSamples = 500;
-            metric.NumberOfHistogramBins = 50;
-            metric.UseAllPixels = true;
-            optimizer.GrowthFactor = 1.050000;
-            optimizer.Epsilon = 1.50000e-06;
-            optimizer.InitialRadius = 6.25000e-03;
-            optimizer.MaximumIterations = 100;
-            
-            % Align centers
-            fixedCenterXWorld = mean(fixedRefObj.XWorldLimits);
-            fixedCenterYWorld = mean(fixedRefObj.YWorldLimits);
-            movingCenterXWorld = mean(movingRefObj.XWorldLimits);
-            movingCenterYWorld = mean(movingRefObj.YWorldLimits);
-            translationX = fixedCenterXWorld - movingCenterXWorld;
-            translationY = fixedCenterYWorld - movingCenterYWorld;
-            
-            % Coarse alignment
-            initTform = affine2d();
-            initTform.T(3,1:2) = [translationX, translationY];
-            
-            %get transformation type from settings drop down menu e.g. similarity, affine, ...
-            
-            % Apply transformation
-            tform = imregtform(MOVING,movingRefObj,FIXED,fixedRefObj,app.SetDropDown.Value,optimizer,metric,'PyramidLevels',3,'InitialTransformation',initTform);
-            MOVINGREG.Transformation = tform;
-            MOVINGREG.RegisteredImage = imwarp(MOVING, movingRefObj, tform, 'OutputView', fixedRefObj, 'SmoothEdges', true);
-            
-            % Store spatial referencing object
-            MOVINGREG.SpatialRefObj = fixedRefObj;
-        end
-        
-        % affected region identification
-%         function region_naming(app)
-%             % load labels, if not loaded 
-%             if isempty(app.dictionary)
-%                 fname = strcat(app.paths{4}, '/acronyms.json');
-%                 fid = fopen(fname);
-%                 raw = fread(fid,inf);
-%                 str = char(raw');
-%                 app.dictionary = jsondecode(str);
-%             end
-%             % if not loaded, load allen masks
-%             if isempty(app.allen_masks)
-%                 app.allen_masks = load(strcat(app.paths{4}, '/allen_masks.mat'));
-%                 app.allen_masks = app.allen_masks.allen_masks;
-%             end
-%             % transform mask to subject space
-%             
-%             % perform linear transformation 
-%             lp_linear = imwarp(app.sub_T.lesion, app.sub_T.movingRefObj, app.sub_T.aff_out.Transformation, 'OutputView', app.sub_T.fixedRefObj, 'SmoothEdges', true);
-%             
-%             % perform non linear registration 
-% %             create_nifti({lp_linear}, app.save_dir, 'lp_lin', [0.021 0.021 0 1]);
-%             nifti_save(app, lp_linear, 'lp_lin', app.save_dir);
-%             
-%             lp_lin_path = strcat(app.save_dir, '/lp_lin');
-%             
-%             dfield_path = strcat(app.save_dir, '/dfield'); 
-%             
-%             dramms_warp_ui(lp_lin_path,dfield_path, app.save_dir, 'lesion_pred_atlas_space', app.paths{5});
-%             
-%             % read from file 
-%             
-%             lp_AS = niftiread(strcat(app.save_dir, '/lesion_pred_atlas_space.nii'));            
-%             
-%             % filter allen mask using lesion prediction\
-%             
-%             % load corresponding mask 
-%             [~, index] = find_reference_img(app, app.IndexiesListBox.Value);
-%             
-%             %extract original allen mask and keep unique
-%             ori_allen_labels = unique(extract_allen_mask_v1(calculate_atlas_index(index)));
-%             
-%             
-%             
-%             % that mask exists
-%             if app.allen_masks.isKey(index)
-%                 label_mask = app.allen_masks(index);
-%                 
-%                 if isequal(size(label_mask), size(lp_AS))
-%                     affected_regions_mask = label_mask .* lp_AS;
-%             
-%                     % aquire interpolated points indexies
-%                     int_indexies = ismember(affected_regions_mask, ori_allen_labels);      
-%                     
-%                     % filter out interpolated points, set to zero
-%                     
-%                     affected_regions_mask(~int_indexies) = 0;
-%                     
-%                     % filter duplicates and find affected regions 
-%                     
-%                     labels = unique(fix(affected_regions_mask(:)));
-%         
-%                     hit_regions = cell(numel(labels),1);
-%                     for i = 1:numel(labels)
-%                         hit_regions{i} = app.js_find(app.dictionary.msg, labels(i));
-%                     end
-%                     
-%                     filePh = fopen(strcat(app.save_dir,'/affected_regions.txt'),'w');
-%                     fprintf(filePh,'%s\n',hit_regions{:});
-%                     fclose(filePh);
-%                 end
-%             end
-%             
-%         end
-        
-        function ot = js_find(app,mat, val)
-            % ot = js_find(mat, val), mat is the json struct and val is the id
-            % value.
-            % recursive function, search in dictionary for allen labels. Returns
-            % name for id.
-            if isempty(mat)
-                ot = [];
-                return;
-            end
-        
-            ind = [mat.id] == val;
-            if (sum(ind(:)) ~= 0) %|| (isempty(A1.children))
-                ot = mat(ind).name;
-                return;
-            end
-            for i = 1:length(mat)
-                
-                    ot = js_find(mat(i).children, val);
-                    if ~isempty(ot)
-                        break;
-                    end
-                
-            end
-            
-        end
         
         function check_paths(app, varargin)
             %check in to the same directory if paths.json file exist. 
@@ -1051,9 +351,6 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
             end            
         end
     
-    
-        
-        
         function write_paths(app)
             % write paths to json file, use app.paths, a class variable which is updated from the file menu buttons
             fid = fopen('paths.json', 'w');
@@ -1062,73 +359,7 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
             fprintf(fid, js);
             fclose(fid);
         end
-        
-        function nifti_save(app,img, name, path)
-%             app.LogTextArea.Value = [app.LogTextArea.Value ; "file created..."];
-            [~, ~, channels] = size(img);
-            
-            if channels > 2 
-                img = rgb2gray(img);
-            end
-            
-            
-            
-            % create a nifti file and load header info
-            if isempty(path)
-               path = pwd; 
-            end
-            
-            fullname = strcat(path, '/', name, '.nii');
-            
-            niftiwrite(single(img), fullname);
-            
-            % read header info 
-            header = niftiinfo(fullname);
-            
-            % alter header according to input arguments 
-            header.PixelDimensions = [0.0210 0.0210];
-            header.Datatype =  'single';
-            header.BitsPerPixel = 32;
-            header.SpaceUnits = 'Millimeter';
-            header.TimeUnits = 'Second';
-            header.MultiplicativeScaling = 1;
-            header.TransformName = 'Sform';
-            
-            header.Transform.T = [0.0210, 0, 0, 0; 0, 0.0210, 0, 0; 0, 0, 1.0000, 0;  0.0210, 0.0210, 1.0000, 1.0000];
-        
-        % "header.raw" values are updated with the changes of the header(above code, not sure, check this); 
-        
-            header.raw.pixdim = [1 0.0210 0.0210 1 0 0 0 0];
-            header.raw.scl_slope = 1;
-            header.raw.xyzt_units = 10;
-            header.raw.qform_code = 2;
-            header.raw.sform_code = 2;
-            header.raw.qoffset_x = 0.0210;
-            header.raw.qoffset_y = 0.0210;
-            header.raw.qoffset_z = 1;
-            header.raw.srow_x = [0.0210 0 0 0.0210];
-            header.raw.srow_y = [0 0.0210 0 0.0210];
-            header.raw.srow_z = [0 0 1 1];
-            header.raw.qform_code = 2;
-            header.raw.sform_code = 2;
-            header.raw.qoffset_x = 0.0210;
-            header.raw.qoffset_y = 0.0210;
-            header.raw.qoffset_z = 1;
-            
-            
-            % re-save file with new header.
-            niftiwrite(single(img), fullname, header);
-            
-        
-        
-        
-        end
-        
-        function my_log(app, str)
-            app.LogTextArea.Value = [app.LogTextArea.Value; str];
-        end
-    end
-    
+end
 
     methods (Access = private)
 
@@ -1143,9 +374,13 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
             end
             
             
-            
+            try            
             % check for path file and display status 
-            check_paths(app, 'disp');
+                check_paths(app, 'disp');
+            catch exception
+                app.LogTextArea.Value = [app.LogTextArea.Value; getReport(exception)];
+            end
+            
             
             % set paths 
             app.model_path = app.paths{1};
@@ -1154,13 +389,19 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
             
             if ~isempty(app.paths{4})
                 %FIX hard coded path value
-                app.hemi_masks = load(strcat(app.paths{4}, '/hemisphere_masks.mat'));
-                app.hemi_masks = app.hemi_masks.hemi_m;
+                 
+                try
+                    app.hemi_masks = load(strcat(app.paths{4}, '/hemisphere_masks.mat'));
+                    app.hemi_masks = app.hemi_masks.hemi_m;
+                    
+                    app.hemi_tr = load(strcat(app.paths{4}, '/hemisphere_transformations','/hemisphere_transformations.mat'));
+                    
+                    app.allen_masks = load(strcat(app.paths{4}, '/allen_masks.mat'));
+                    app.allen_masks = app.allen_masks.allen_masks;                     
+                catch exception
+                    app.LogTextArea.Value = [app.LogTextArea.Value; getReport(exception)];
+                end
                 
-                app.hemi_tr = load(strcat(app.paths{4}, '/hemisphere_transformations','/hemisphere_transformations.mat'));
-                
-                app.allen_masks = load(strcat(app.paths{4}, '/allen_masks.mat'));
-                app.allen_masks = app.allen_masks.allen_masks; 
             else 
                 app.hemi_masks = [];
                 app.LogTextArea.Value = [app.LogTextArea.Value; "Hemisphere masks not found, please set dependencies path first."];
@@ -1362,6 +603,13 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
                 app.RIndexiesListBox.Items = cell(0,0);
                 if strcmp(app.MonoSwitch.Value, 'Single')
                     
+                    try
+                        if isempty(app.hemi_masks)
+                            app.hemi_masks = load(strcat(app.paths{4}, '/hemisphere_masks.mat'));
+                        end
+                    catch exception
+                        app.LogTextArea.Value = [app.LogTextArea.Value; getReport(exception)];
+                    end
                     
                     % if working directory is not set, use default
                     if isempty(app.wor_dir)
@@ -1414,19 +662,26 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
                     % random forest lesion prediction
                     app.sub_T.lesion = ml_prediction(app.model, f_v_19, app.sub_T.subject);
                     
+                    app.LogTextArea.Value = [app.LogTextArea.Value; "Lesion Prediction Finished!"];
+                    
                     imwrite(app.sub_T.lesion, strcat(app.save_dir,'/',app.sub_T.index, '_pre.jpg'))
 
                     % save data to visualization folder 
                     mkdir(app.save_dir, strcat('vis_',app.sub_T.index));
                     new_save_dir = fullfile(app.save_dir, strcat('vis_',app.sub_T.index));
-
+                    
+                    app.sub_T.zscore_out = zscore_out;
+                    app.sub_T.new_save_dir = new_save_dir;
+                    
                     compute_volumetric_data(app.sub_T.lesion, zscore_out.ss_LHM, zscore_out.ss_RHM, app.sub_T.index, new_save_dir)
 
                     % transform ml_p to atlas space for region naming 
                     ml_p_atlas_s = transform_to_as(app.sub_T.lesion, 'ml_prediction_as', ...
                         app.affine_data_S2A, non_lin_reg_info.regi_output_path_dfield, ...
                         app.save_dir, app.paths{5});
-                                    
+                       
+                    app.sub_T.ml_p_atlas_s = ml_p_atlas_s;
+                    
                     if isempty(app.dictionary)
                         fname = strcat(app.paths{4}, '/acronyms.json');
                         fid = fopen(fname);
@@ -1451,6 +706,7 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
                     imwrite(right_hem, strcat(new_save_dir, "/right_", num2str(app.sub_T.index), ".jpg"));
                     
                     subject_info = app.sub_T;
+                    app.sub_T.save_dir = app.save_dir;
                     save(strcat(app.save_dir,'/all'), 'subject_info');
                     clear('subject_info');
                 else
@@ -1515,6 +771,7 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
                         % save data to visualization folder 
                         mkdir(app.save_dir, strcat('vis_',app.sub_T.index));
                         new_save_dir = fullfile(app.save_dir, strcat('vis_',app.sub_T.index));
+                        app.sub_T.new_save_dir = new_save_dir;
     
                         compute_volumetric_data(app.sub_T.lesion, zscore_out.ss_LHM, zscore_out.ss_RHM, app.sub_T.index, new_save_dir)
     
@@ -1522,6 +779,8 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
                         ml_p_atlas_s = transform_to_as(app.sub_T.lesion, 'ml_prediction_as', ...
                             app.affine_data_S2A, non_lin_reg_info.regi_output_path_dfield, ...
                             app.save_dir, app.paths{5});
+                        
+                        app.sub_T.ml_p_atlas_s = ml_p_atlas_s;
                                         
                         if isempty(app.dictionary)
                             fname = strcat(app.paths{4}, '/acronyms.json');
@@ -1583,6 +842,7 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
 %                 names = fieldnames(L);
                 try
                     app.model = L.model;
+                    app.LogTextArea.Value = [app.LogTextArea.Value; "Model loaded!"];
                 catch exception
                     app.LogTextArea.Value = [app.LogTextArea.Value; getReport(exception)];
                 end
@@ -1736,9 +996,23 @@ classdef stroke_analyst_ui < matlab.apps.AppBase
         % Button pushed function: finalButton
         function finalButtonPushed(app, event)
             app.sub_T.lesion = app.corrected_lesion;
-            imshow( blend_img(app,app.sub_T.subject, app.sub_T.lesion, 60), 'Parent', app.ResAxes1);
+            imshow(blend_img(app,app.sub_T.subject, app.sub_T.lesion, 60), 'Parent', app.ResAxes1);
             imshow(blend_img(app,app.sub_T.subject, app.sub_T.lesion, 60)); 
-
+            
+            % recompute affected regions and lesion area
+            region_naming(app.dictionary, app.allen_masks, app.sub_T.index, ... 
+                app.sub_T.ml_p_atlas_s.def_transformed_img, app.sub_T.new_save_dir);
+                
+            compute_volumetric_data(app.sub_T.lesion, app.sub_T.zscore_out.ss_LHM, ... 
+                app.sub_T.zscore_out.ss_RHM, app.sub_T.index, app.sub_T.new_save_dir);
+            
+            les = blend_img(app, app.sub_T.subject, app.sub_T.lesion, 60);
+            imwrite(les, strcat(app.sub_T.new_save_dir, "/", num2str(app.sub_T.index), "_m_adjusted.jpg"));
+            
+            % save matlab file with manual adjustement 
+            subject_info = app.sub_T;
+            save(strcat(app.sub_T.save_dir,'/all'), 'subject_info');
+            clear('subject_info');
         end
 
         % Menu selected function: setmodelpathMenu
