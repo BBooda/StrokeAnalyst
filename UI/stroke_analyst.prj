@@ -1,0 +1,201 @@
+<deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
+  <configuration build-checksum="1841075121" file="/home/makis/Documents/GitRepos/StrokeAnalyst/UI/stroke_analyst.prj" location="/home/makis/Documents/GitRepos/StrokeAnalyst/UI" name="stroke_analyst" preferred-package-location="/home/makis/Documents/GitRepos/StrokeAnalyst/UI/stroke_analyst/for_redistribution" preferred-package-type="package.type.install" target="target.ezdeploy.standalone" target-name="Application Compiler">
+    <param.appname>stroke_analyst</param.appname>
+    <param.icon />
+    <param.icons />
+    <param.version>1.0</param.version>
+    <param.authnamewatermark />
+    <param.email />
+    <param.company />
+    <param.summary />
+    <param.description />
+    <param.screenshot />
+    <param.guid />
+    <param.installpath.string>/stroke_analyst/</param.installpath.string>
+    <param.installpath.combo>option.installpath.user</param.installpath.combo>
+    <param.logo />
+    <param.install.notes />
+    <param.target.install.notes>In the following directions, replace MR/v95 by the directory on the target machine where MATLAB is installed, or MR by the directory where the MATLAB Runtime is installed.
+
+(1) Set the environment variable XAPPLRESDIR to this value:
+
+MR/v95/X11/app-defaults
+
+
+(2) If the environment variable LD_LIBRARY_PATH is undefined, set it to the following:
+
+MR/v95/runtime/glnxa64:MR/v95/bin/glnxa64:MR/v95/sys/os/glnxa64:MR/v95/sys/opengl/lib/glnxa64
+
+If it is defined, set it to the following:
+
+${LD_LIBRARY_PATH}:MR/v95/runtime/glnxa64:MR/v95/bin/glnxa64:MR/v95/sys/os/glnxa64:MR/v95/sys/opengl/lib/glnxa64</param.target.install.notes>
+    <param.intermediate>${PROJECT_ROOT}/stroke_analyst/for_testing</param.intermediate>
+    <param.files.only>${PROJECT_ROOT}/stroke_analyst/for_redistribution_files_only</param.files.only>
+    <param.output>${PROJECT_ROOT}/stroke_analyst/for_redistribution</param.output>
+    <param.logdir>${PROJECT_ROOT}/stroke_analyst</param.logdir>
+    <param.enable.clean.build>false</param.enable.clean.build>
+    <param.user.defined.mcr.options />
+    <param.target.type>subtarget.standalone</param.target.type>
+    <param.support.packages />
+    <param.web.mcr>true</param.web.mcr>
+    <param.package.mcr>false</param.package.mcr>
+    <param.no.mcr>false</param.no.mcr>
+    <param.web.mcr.name>MyAppInstaller_web</param.web.mcr.name>
+    <param.package.mcr.name>MyAppInstaller_mcr</param.package.mcr.name>
+    <param.no.mcr.name>MyAppInstaller_app</param.no.mcr.name>
+    <param.windows.command.prompt>false</param.windows.command.prompt>
+    <param.create.log>true</param.create.log>
+    <param.log.file>log</param.log.file>
+    <param.native.matlab>false</param.native.matlab>
+    <param.checkbox>false</param.checkbox>
+    <param.example />
+    <param.help.text />
+    <unset>
+      <param.icon />
+      <param.icons />
+      <param.version />
+      <param.authnamewatermark />
+      <param.email />
+      <param.company />
+      <param.summary />
+      <param.description />
+      <param.screenshot />
+      <param.guid />
+      <param.installpath.string />
+      <param.installpath.combo />
+      <param.logo />
+      <param.install.notes />
+      <param.intermediate />
+      <param.files.only />
+      <param.output />
+      <param.logdir />
+      <param.enable.clean.build />
+      <param.user.defined.mcr.options />
+      <param.target.type />
+      <param.support.packages />
+      <param.web.mcr />
+      <param.package.mcr />
+      <param.no.mcr />
+      <param.web.mcr.name />
+      <param.package.mcr.name />
+      <param.no.mcr.name />
+      <param.windows.command.prompt />
+      <param.native.matlab />
+      <param.checkbox />
+      <param.example />
+      <param.help.text />
+    </unset>
+    <fileset.main>
+      <file>${PROJECT_ROOT}/stroke_analyst_ui.mlapp</file>
+    </fileset.main>
+    <fileset.resources>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/atlas_functions/parse_to_number.m</file>
+      <file>/home/makis/Documents/GitRepos/data_dependencies/acronyms.json</file>
+      <file>/home/makis/Documents/GitRepos/data_dependencies/allen_masks.mat</file>
+      <file>/home/makis/Documents/GitRepos/data_dependencies/atlasVolume.raw</file>
+      <file>/home/makis/Documents/GitRepos/data_dependencies/hemisphere_masks.mat</file>
+      <file>/home/makis/Documents/GitRepos/data_dependencies/myatlasv1.mat</file>
+      <file>/home/makis/Documents/GitRepos/processing_folder/Training_Febr_2021/model_19.mat</file>
+    </fileset.resources>
+    <fileset.package />
+    <fileset.depfun>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/abnormality_detection/compute_zscore.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/atlas_functions/extract_allen_mask.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/create_data/create_affine_data.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/create_data/create_hem_diff_color_features.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/create_data/create_img_hem_diff.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/create_data/create_zscore_flip.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/create_data/register_atlas_hemisphere.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/create_data/transform_to_as.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/create_data/transform_to_ss.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/create_processing_folder.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/img_processing_fun/avg_superpixels.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/img_processing_fun/compute_midline_threshold.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/img_processing_fun/image_segmentation/image segmentation/function/EnergyOfFeatureField.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/img_processing_fun/image_segmentation/image segmentation/function/EnergyOfLabelField.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/img_processing_fun/image_segmentation/image segmentation/function/GMM_parameter.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/img_processing_fun/image_segmentation/image segmentation/function/ICM.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/img_processing_fun/image_segmentation/image segmentation/function/NeiX.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/img_processing_fun/image_segmentation/image segmentation/function/covmatrix.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/img_processing_fun/image_segmentation/image segmentation/function/imstack2vectors.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/img_processing_fun/markovRRF_segmentation.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/img_processing_fun/pcaV1.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/img_processing_fun/pixel_brush.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/img_processing_fun/remove_lession_background_ui.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/img_processing_fun/segment_img.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/ml_functions/create_hem_diff_feat.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/ml_functions/create_ml_features.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/ml_functions/ml_prediction.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/nifti_save.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/registration/dramms_2dregistration.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/registration/dramms_inverse_dfield.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/registration/dramms_warp.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/registration/linear_registration.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/registration/non_linear_registration.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/results/compute_volumetric_data.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/results/js_find.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/results/region_naming.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/Dependencies/visualization/blend_img.m</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/log.txt</file>
+      <file>/home/makis/Documents/GitRepos/StrokeAnalyst/paths.json</file>
+      <file>/home/makis/Documents/MouseStrokeImageAnalysis/ScriptTest/task2/calculate_atlas_index.m</file>
+    </fileset.depfun>
+    <build-deliverables>
+      <file location="${PROJECT_ROOT}/stroke_analyst/for_testing" name="readme.txt" optional="true">/home/makis/Documents/GitRepos/StrokeAnalyst/UI/stroke_analyst/for_testing/readme.txt</file>
+      <file location="${PROJECT_ROOT}/stroke_analyst/for_testing" name="run_stroke_analyst.sh" optional="false">/home/makis/Documents/GitRepos/StrokeAnalyst/UI/stroke_analyst/for_testing/run_stroke_analyst.sh</file>
+      <file location="${PROJECT_ROOT}/stroke_analyst/for_testing" name="splash.png" optional="false">/home/makis/Documents/GitRepos/StrokeAnalyst/UI/stroke_analyst/for_testing/splash.png</file>
+      <file location="${PROJECT_ROOT}/stroke_analyst/for_testing" name="stroke_analyst" optional="false">/home/makis/Documents/GitRepos/StrokeAnalyst/UI/stroke_analyst/for_testing/stroke_analyst</file>
+    </build-deliverables>
+    <workflow />
+    <matlab>
+      <root>/home/makis/Documents/matlab18b</root>
+      <toolboxes>
+        <toolbox name="matlabcoder" />
+        <toolbox name="embeddedcoder" />
+        <toolbox name="gpucoder" />
+        <toolbox name="fixedpoint" />
+        <toolbox name="neuralnetwork" />
+      </toolboxes>
+      <toolbox>
+        <matlabcoder>
+          <enabled>true</enabled>
+        </matlabcoder>
+      </toolbox>
+      <toolbox>
+        <embeddedcoder>
+          <enabled>true</enabled>
+        </embeddedcoder>
+      </toolbox>
+      <toolbox>
+        <gpucoder>
+          <enabled>true</enabled>
+        </gpucoder>
+      </toolbox>
+      <toolbox>
+        <fixedpoint>
+          <enabled>true</enabled>
+        </fixedpoint>
+      </toolbox>
+      <toolbox>
+        <neuralnetwork>
+          <enabled>true</enabled>
+        </neuralnetwork>
+      </toolbox>
+    </matlab>
+    <platform>
+      <unix>true</unix>
+      <mac>false</mac>
+      <windows>false</windows>
+      <win2k>false</win2k>
+      <winxp>false</winxp>
+      <vista>false</vista>
+      <linux>true</linux>
+      <solaris>false</solaris>
+      <osver>5.4.0-77-generic</osver>
+      <os32>false</os32>
+      <os64>true</os64>
+      <arch>glnxa64</arch>
+      <matlab>true</matlab>
+    </platform>
+  </configuration>
+</deployment-project>
