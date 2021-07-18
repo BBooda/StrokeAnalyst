@@ -17,6 +17,10 @@ function transf_info = dramms_inverse_dfield(dfield_path, out_path, dr_dir)
 
     % exexute dramms command
     command = strcat("/",dr_dir, "/dramms-defop -i ", dfield_path,".nii.gz", " ", out_path, "/inv_dfield.nii.gz");
+    
+    % unset env variable LD_LIBRARY_PATH (causes problems with dramms)
+    command = strcat('unset LD_LIBRARY_PATH ; ', command);
+    
     [status, result] = system(command, '-echo');
     if status ~= 0
         result

@@ -16,6 +16,10 @@ function dramms_warp(img_path,dfield_path, out_path, name, dr_dir)
 
     command = strcat("/",dr_dir,"/dramms-warp ", img_path, ".nii", " ", dfield_path, ".nii.gz", " ",...
         out_path, "/",convertCharsToStrings(name), ".nii");
+
+    % unset env variable LD_LIBRARY_PATH (causes problems with dramms)
+    command = strcat('unset LD_LIBRARY_PATH ; ', command);
+    
     [status, result] = system(command, '-echo');
     if status ~= 0
         result

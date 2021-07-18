@@ -34,6 +34,17 @@ function reg_info = dramms_2dregistration(target_path,moving_path,out_path, file
     sett = " -w 1 -a 0 -c 1"; % < -c 1 > for lesions and cuts..
 
     command = strcat("/", dramms_path, "/dramms", " -S ", moving_path, " -T ", target_path, " -O ", out_path, " -D ", out_path_dfield,sett);
-    [status, result] = system(command, '-echo');    
+    
+    % unset env variable LD_LIBRARY_PATH (causes problems with dramms)
+    command = strcat('unset LD_LIBRARY_PATH ; ', command);
+    
+    fileID = fopen('log.txt','a+');
+    fprintf(fileID,'%6s\n',command);
+    fclose(fileID);
+    [status, result] = system(command, '-echo'); 
+    disp({status, result})
+    fileID = fopen('log.txt','a+');
+    fprintf(fileID,'%d %6s\n',status,result);
+    fclose(fileID);
 
 end
