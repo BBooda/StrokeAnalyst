@@ -1,7 +1,8 @@
-function region_naming(allen_json, allen_masks, index, lesion_AS, save_dir)
+function region_naming(allen_json, allen_masks, index, ...
+    lesion_AS, allen_atlas_path, save_dir)
       
     %extract original allen mask and keep unique
-    ori_allen_labels = unique(extract_allen_mask(calculate_atlas_index(index)));
+    ori_allen_labels = unique(extract_allen_mask_ui(calculate_atlas_index(index), allen_atlas_path));
 
     % cast to number
     if isa(index,'char')
